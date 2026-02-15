@@ -1,44 +1,70 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Add Order Details lookup page with URL routing",
+  "title": "Checkout enhancements: auto order details, online payment notes + deep link, and Rapido pickup helper",
   "requirements": [
     {
-      "id": "REQ-17",
-      "summary": "Create an Order Details lookup page that validates an Order ID and fetches/displays full order info using the existing useGetOrder React Query hook.",
+      "id": "REQ-23",
+      "summary": "Automatically show full details of the newly created order immediately after successful checkout, with clear recovery UI if details fail to load.",
       "acceptanceCriteria": [
-        "A new page exists where the user can input an Order ID (numeric) and submit to load the order.",
-        "The page uses the existing React Query hook pattern (useGetOrder) to fetch and display: Order ID, customer name, phone number, delivery address, optional notes, items with quantities, total amount, and timestamp (formatted for display).",
-        "Loading state is shown while fetching; errors are shown in a user-friendly English message (e.g., order not found / unauthorized) and include the contact phone number 9000009707.",
-        "Entering an invalid Order ID (empty, non-numeric, or <= 0) does not call the backend and shows an inline validation message."
+        "When an order is successfully created from Checkout, the user is taken directly to a screen that shows full order details for the newly created order (customer info, address, items, total, and timestamp).",
+        "The user does not need to type the order ID or click a secondary button to see the order details after placing an order.",
+        "If the order details cannot be loaded, the UI shows a clear error state with a call-to-action to contact the business by phone and includes the order ID if available."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/OrderDetailsPage.tsx",
-          "operation": "create",
-          "description": "Add an Order Details page that (1) reads an optional orderId route param, (2) provides an Order ID input + submit, (3) validates empty/non-numeric/<=0 inputs with inline messaging and prevents fetching when invalid, and (4) uses the existing useGetOrder hook to fetch and render the full order details including a formatted timestamp, with loading and friendly error messaging that includes contact phone 9000009707. Use shadcn-ui components (e.g., Card, Button, Alert, Separator, Skeleton, form input components available in the project) for consistent UI; verify the component's usage instructions before implementing."
+          "path": "frontend/src/pages/OrderConfirmationPage.tsx",
+          "operation": "modify",
+          "description": "Update the confirmation screen to function as the immediate post-checkout full order details view: display timestamp alongside customer info/address/items/total, and strengthen the error state to include the route order ID (when available) plus a clear tap-to-call call-to-action. Use existing shadcn-ui primitives (Card/Alert/Button/etc.) for layout and messaging; verify the component's usage instructions before implementing."
         }
       ]
     },
     {
-      "id": "REQ-18",
-      "summary": "Add routes and navigation to access the Order Details page, including direct links with an Order ID in the URL and a link from Order Confirmation.",
+      "id": "REQ-24",
+      "summary": "Add required payment method selection to Checkout with an Online Payment deep link, optional transaction reference input, and append payment details into the order notes sent to createOrder.",
       "acceptanceCriteria": [
-        "A route is added in frontend/src/App.tsx for the Order Details page.",
-        "The route supports optional direct navigation with an Order ID (e.g., /order/$orderId or similar) so that /.../123 loads Order ID 123 without manual input.",
-        "The Order Confirmation page provides a clear link/button to open the Order Details page for the current confirmed order.",
-        "The app builds and existing routes (Home, Products, Cart, Checkout, Confirmation, Contact, Admin) continue to work unchanged."
+        "Checkout includes a required payment method choice (at minimum: \"Cash on Delivery\" and \"Online Payment\").",
+        "If \"Online Payment\" is selected, the UI presents a clear \"Pay Now\" action via a deep link and an optional input for a payment reference/transaction ID.",
+        "On order submission, the payment method and optional reference are appended to the notes payload sent to createOrder so it is visible on order confirmation/details screens.",
+        "If online payment configuration details are missing (e.g., no payee configured), the UI gracefully informs the user and still allows placing the order with an appropriate note."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/App.tsx",
+          "path": "frontend/src/pages/CheckoutPage.tsx",
           "operation": "modify",
-          "description": "Register Order Details routes using TanStack Router: add a dedicated lookup route (e.g., /order) and a direct-link route with an Order ID param (e.g., /order/$orderId) that both render OrderDetailsPage. Add a navigation entry (e.g., in the header and/or footer quick links) to reach the lookup route without disrupting existing routes. If using shadcn-ui Button/link styling, verify the component's usage instructions before implementing."
+          "description": "Extend the checkout form with a required payment method selection (Cash on Delivery vs Online Payment). When Online Payment is selected, show a \"Pay Now\" action that uses a deep link and an optional input for payment reference/transaction ID. On submit, append payment method + optional reference (and a \"not configured\" note when needed) into the notes string sent via the existing useCreateOrder call (no backend changes). Compose UI using existing shadcn-ui components already used on the page (Card/Button/Input/Label/Alert/etc.); verify the component's usage instructions before implementing."
         },
+        {
+          "path": "frontend/src/config/payment.ts",
+          "operation": "create",
+          "description": "Add a small frontend-only configuration module for online payment details (e.g., payee VPA/UPI ID, payee name, optional fallback URL). This enables the UI to detect missing configuration and present the required graceful message while still allowing order placement."
+        },
+        {
+          "path": "frontend/src/utils/payment.ts",
+          "operation": "create",
+          "description": "Create utilities to build an online payment deep link (e.g., UPI intent) from configured payee details and the computed order total, plus helpers to format the payment note text appended to the order notes."
+        }
+      ]
+    },
+    {
+      "id": "REQ-25",
+      "summary": "Provide a post-order \"Book Rapido Pickup\" helper with deep link to Rapido and a copyable pickup note containing key order details.",
+      "acceptanceCriteria": [
+        "The post-order success screen shows a \"Book Rapido Pickup\" button/section.",
+        "Clicking the button opens Rapido (at minimum via https://rapido.bike/ ) in a new tab/window.",
+        "The UI provides a copy-to-clipboard action that copies a formatted pickup note containing at least: order ID, customer phone number, delivery address, and item list/quantities.",
+        "This feature does not block normal checkout and is optional to use."
+      ],
+      "file_operations": [
         {
           "path": "frontend/src/pages/OrderConfirmationPage.tsx",
           "operation": "modify",
-          "description": "Add a clear link/button on the confirmation screen to open the new Order Details page for the confirmed order (deep link using the current order id in the URL). Use existing styling patterns and shadcn-ui Button/Link composition as appropriate; verify the component's usage instructions before implementing."
+          "description": "Add a \"Book Rapido Pickup\" section on the post-order confirmation/details screen: include a button that opens https://rapido.bike/ in a new tab/window and a copy-to-clipboard action that copies a formatted pickup summary derived from the loaded order (order ID, customer phone, address, and item list/quantities). Use existing shadcn-ui primitives (Button/Alert/Card/etc.) for UI structure and feedback; verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/utils/rapidoPickupNote.ts",
+          "operation": "create",
+          "description": "Add a formatter utility that generates the pickup text summary from an Order (including order ID, phone number, address, and item lines). This will be used by the confirmation page copy-to-clipboard action."
         }
       ]
     }

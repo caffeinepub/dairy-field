@@ -11,6 +11,7 @@ import AdminRatesPage from './pages/AdminRatesPage';
 import { CartProvider, useCart } from './state/cart/CartContext';
 import { Button } from './components/ui/button';
 import { useInternetIdentity } from './hooks/useInternetIdentity';
+import AddToHomeScreen from './components/AddToHomeScreen';
 
 function Layout() {
   const { getCartCount } = useCart();
@@ -72,7 +73,7 @@ function Layout() {
 
       <footer className="border-t bg-muted/30 py-8 mt-12">
         <div className="container">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             <div>
               <h3 className="font-semibold mb-3">DAIRY FIELD</h3>
               <p className="text-sm text-muted-foreground">
@@ -103,7 +104,13 @@ function Layout() {
               </div>
             </div>
           </div>
-          <div className="mt-8 pt-6 border-t text-center text-sm text-muted-foreground">
+
+          {/* Add to Home Screen Component */}
+          <div className="mb-8">
+            <AddToHomeScreen />
+          </div>
+
+          <div className="pt-6 border-t text-center text-sm text-muted-foreground">
             <p>
               © {new Date().getFullYear()} DAIRY FIELD. Built with ❤️ using{' '}
               <a 

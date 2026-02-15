@@ -107,28 +107,28 @@ actor {
     {
       name = "Khowa";
       category = "Dairy";
-      price = 80;
+      price = 300; // Updated price
       unit = "500g";
       description = ?"Thickened milk used in Indian sweets";
     },
     {
       name = "Cream";
       category = "Dairy";
-      price = 70;
+      price = 150; // Updated price
       unit = "250g";
       description = ?"Rich dairy cream";
     },
     {
       name = "Paneer";
       category = "Dairy";
-      price = 120;
+      price = 300; // Updated price
       unit = "500g";
       description = ?"Indian cottage cheese";
     },
     {
       name = "Ghee";
       category = "Dairy";
-      price = 200;
+      price = 500; // Updated price
       unit = "500g";
       description = ?"Clarified butter";
     },
@@ -142,7 +142,7 @@ actor {
     {
       name = "Fruit Ice Cream";
       category = "Frozen Dessert";
-      price = 100;
+      price = 300; // Updated price and product name to "Fruit Ice Cream"
       unit = "1L";
       description = ?"Delicious fruit-flavored ice cream";
     },

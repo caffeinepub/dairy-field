@@ -1,8 +1,10 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 13,
-  "summary": "Build an app/website for DAIRY FIELD to sell premium dairy products online (milk, curd, malai curd, khowa, cream, paneer, ghee variants), emphasizing purity/no artificial colour or essence, with customer contact via phone and WhatsApp. Remove Frozen Dessert items/category and add premium natural fruit/dry fruit/saffron offerings.",
-  "architectural_notes": [],
+  "projectStateVersion": 19,
+  "summary": "Build an app/website for DAIRY FIELD to sell premium dairy products online (milk, curd, malai curd, khowa, cream, paneer, ghee variants), emphasizing purity/no artificial colour or essence, with customer contact via phone and WhatsApp. Remove Frozen Dessert items/category and add premium natural fruit/dry fruit/saffron offerings. Add enhanced post-checkout order details visibility, online payment option, and Rapido pickup booking integration.",
+  "architectural_notes": [
+    "Consider enabling PWA support (web app manifest + service worker) to allow Add to Home Screen / install prompt on mobile."
+  ],
   "known_issues": [
     "Deployed site still shows old product rates (\"Version 1\" rates); latest rate changes not reflected/updated."
   ],
@@ -101,6 +103,54 @@
       "title": "Add routing and navigation to reach the Order Details page, including a dedicated route that supports direct linking with an Order ID in the URL.",
       "reqIds": [
         "REQ-18"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-enable-pwa-installation-so-the-dairy-field-website-can-be-added-to-a-customer-s-phone-home-screen-android-chrome-install-prompt-and-ios-safari-home-screen-instructions-including-adding-a-web-app-manifest-icons-and-required-html-metadata",
+      "title": "Enable PWA installation so the DAIRY FIELD website can be added to a customer’s phone home screen (Android/Chrome install prompt and iOS/Safari home-screen instructions), including adding a web app manifest, icons, and required HTML metadata.",
+      "reqIds": [
+        "REQ-20"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-an-in-app-add-to-home-screen-entry-point-in-the-ui-that-helps-users-install-save-the-site-on-their-phone-on-supported-browsers-show-an-install-button-that-triggers-the-native-install-prompt-on-ios-safari-show-clear-step-by-step-instructions-to-use-share-add-to-home-screen",
+      "title": "Add an in-app \"Add to Home Screen\" entry point in the UI that helps users install/save the site on their phone: on supported browsers show an install button that triggers the native install prompt; on iOS/Safari show clear step-by-step instructions to use Share → \"Add to Home Screen\".",
+      "reqIds": [
+        "REQ-21"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-the-generated-pwa-icons-are-available-as-static-assets-under-frontend-public-and-are-referenced-by-the-manifest-do-not-serve-images-from-the-backend",
+      "title": "Ensure the generated PWA icons are available as static assets under frontend/public and are referenced by the manifest (do not serve images from the backend).",
+      "reqIds": [
+        "REQ-22"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-post-checkout-flow-so-that-immediately-after-a-successful-order-placement-the-app-automatically-shows-the-full-order-details-for-that-new-order-without-requiring-the-user-to-manually-look-up-or-click-into-the-order-details-page",
+      "title": "Update the post-checkout flow so that immediately after a successful order placement, the app automatically shows the full order details for that new order without requiring the user to manually look up or click into the Order Details page.",
+      "reqIds": [
+        "REQ-23"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-an-online-payment-option-to-the-checkout-experience-as-an-explicit-payment-method-selection-including-ui-for-initiating-payment-via-a-deep-link-e-g-upi-intent-and-capturing-an-optional-payment-reference-transaction-id-include-the-selected-payment-method-and-optional-reference-in-the-order-notes-sent-to-the-existing-backend-createorder-api-no-backend-changes",
+      "title": "Add an \"Online Payment\" option to the checkout experience as an explicit payment method selection, including UI for initiating payment via a deep link (e.g., UPI intent) and capturing an optional payment reference/transaction ID; include the selected payment method and optional reference in the order notes sent to the existing backend createOrder API (no backend changes).",
+      "reqIds": [
+        "REQ-24"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-after-an-order-is-booked-provide-a-book-rapido-pickup-option-that-helps-the-user-request-a-rapido-pickup-by-opening-rapido-in-a-new-tab-app-deep-link-to-rapido-website-app-and-providing-a-copyable-text-summary-containing-the-order-id-and-key-order-details-for-sharing-with-a-rider",
+      "title": "After an order is booked, provide a \"Book Rapido Pickup\" option that helps the user request a Rapido pickup by opening Rapido in a new tab/app (deep link to Rapido website/app) and providing a copyable text summary containing the order ID and key order details for sharing with a rider.",
+      "reqIds": [
+        "REQ-25"
       ],
       "version": 1
     }
@@ -223,6 +273,44 @@
     {
       "id": "AR-22",
       "summary": "Add an Order Details page in the app to view full order information (lookup/display by Order ID, including customer info, items, totals, timestamp)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-23",
+      "summary": "Update product rates as requested: Cream ₹150/250g, Ghee ₹500/500g, Khowa ₹300/500g, Paneer ₹300/500g, Fruit Base Ice Cream ₹300/L",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-24",
+      "summary": "Update the backend default product catalog pricing so that the following products return the new rates via `listProducts()`:\n- Cream: ₹150 per 250g\n- Ghee: ₹500 per 500g\n- Khowa: ₹300 per 500g\n- Paneer: ₹300 per 500g\n- Fruit Ice Cream (requested as “Fruit Base Ice Cream”): ₹300 per 1L\n\nKeep product names/keys and units consistent with the existing catalog entries unless explicitly stated above (e.g., keep the existing `unit` values of 250g, 500g, and 1L).",
+      "reqIds": [
+        "REQ-19"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-25",
+      "summary": "Add an “Add to Home Screen” (PWA install) option so the DAIRY FIELD website can be saved/installed on a customer’s phone like an app",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-26",
+      "summary": "Automatically show full Order Details immediately after an order is successfully placed (post-checkout), without requiring manual Order ID lookup",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-27",
+      "summary": "Add an online payment option to the checkout flow (customers can pay online while placing the order)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-28",
+      "summary": "After booking an order, provide an option to book Rapido to collect/pick up the order (Rapido booking integration or deep-link)",
       "reqIds": [],
       "status": "pending"
     }

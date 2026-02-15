@@ -2,29 +2,9 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-add-a-new-order-details-page-that-allows-a-user-to-enter-an-order-id-and-view-the-full-order-information-by-fetching-the-order-via-the-existing-backend-getorder-orderid-api",
-      "featureTitle": "Add a new Order Details page that allows a user to enter an Order ID and view the full order information by fetching the order via the existing backend getOrder(orderId) API.",
+      "featureId": "feature-update-the-post-checkout-flow-so-that-immediately-after-a-successful-order-placement-the-app-automatically-shows-the-full-order-details-for-that-new-order-without-requiring-the-user-to-manually-look-up-or-click-into-the-order-details-page",
+      "featureTitle": "Update the post-checkout flow so that immediately after a successful order placement, the app automatically shows the full order details for that new order without requiring the user to manually look up or click into the Order Details page.",
       "files": [
-        "frontend/src/pages/OrderDetailsPage.tsx"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "authorization@4.0.0"
-      ],
-      "testIds": [
-        "REQ-17"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-routing-and-navigation-to-reach-the-order-details-page-including-a-dedicated-route-that-supports-direct-linking-with-an-order-id-in-the-url",
-      "featureTitle": "Add routing and navigation to reach the Order Details page, including a dedicated route that supports direct linking with an Order ID in the URL.",
-      "files": [
-        "frontend/src/App.tsx",
         "frontend/src/pages/OrderConfirmationPage.tsx"
       ],
       "components": [
@@ -36,7 +16,48 @@
         "authorization@4.0.0"
       ],
       "testIds": [
-        "REQ-18"
+        "REQ-23"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-an-online-payment-option-to-the-checkout-experience-as-an-explicit-payment-method-selection-including-ui-for-initiating-payment-via-a-deep-link-e-g-upi-intent-and-capturing-an-optional-payment-reference-transaction-id-include-the-selected-payment-method-and-optional-reference-in-the-order-notes-sent-to-the-existing-backend-createorder-api-no-backend-changes",
+      "featureTitle": "Add an \"Online Payment\" option to the checkout experience as an explicit payment method selection, including UI for initiating payment via a deep link (e.g., UPI intent) and capturing an optional payment reference/transaction ID; include the selected payment method and optional reference in the order notes sent to the existing backend createOrder API (no backend changes).",
+      "files": [
+        "frontend/src/config/payment.ts",
+        "frontend/src/pages/CheckoutPage.tsx",
+        "frontend/src/utils/payment.ts"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0"
+      ],
+      "testIds": [
+        "REQ-24"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-after-an-order-is-booked-provide-a-book-rapido-pickup-option-that-helps-the-user-request-a-rapido-pickup-by-opening-rapido-in-a-new-tab-app-deep-link-to-rapido-website-app-and-providing-a-copyable-text-summary-containing-the-order-id-and-key-order-details-for-sharing-with-a-rider",
+      "featureTitle": "After an order is booked, provide a \"Book Rapido Pickup\" option that helps the user request a Rapido pickup by opening Rapido in a new tab/app (deep link to Rapido website/app) and providing a copyable text summary containing the order ID and key order details for sharing with a rider.",
+      "files": [
+        "frontend/src/pages/OrderConfirmationPage.tsx",
+        "frontend/src/utils/rapidoPickupNote.ts"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0"
+      ],
+      "testIds": [
+        "REQ-25"
       ],
       "confidence": "high"
     }

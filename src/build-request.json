@@ -1,56 +1,75 @@
 {
   "kind": "build_request",
-  "title": "Add Order Details page (lookup by Order ID)",
+  "title": "Auto-show order details after checkout, add online payment option, and Rapido pickup deep link",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-17",
-      "text": "Add a new Order Details page that allows a user to enter an Order ID and view the full order information by fetching the order via the existing backend getOrder(orderId) API.",
+      "id": "REQ-23",
+      "text": "Update the post-checkout flow so that immediately after a successful order placement, the app automatically shows the full order details for that new order without requiring the user to manually look up or click into the Order Details page.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "ADD ORDER DETAILS PAGE"
+          "SHOW ORDER DETAILS AUTOMATICALLY WHEN ORDER DONE"
         ]
       },
       "acceptanceCriteria": [
-        "A new page exists where the user can input an Order ID (numeric) and submit to load the order.",
-        "The page uses the existing React Query hook pattern (useGetOrder) to fetch and display: Order ID, customer name, phone number, delivery address, optional notes, items with quantities, total amount, and timestamp (formatted for display).",
-        "Loading state is shown while fetching; errors are shown in a user-friendly English message (e.g., order not found / unauthorized) and include the contact phone number 9000009707.",
-        "Entering an invalid Order ID (empty, non-numeric, or <= 0) does not call the backend and shows an inline validation message."
+        "When an order is successfully created from Checkout, the user is taken directly to a screen that shows full order details for the newly created order (customer info, address, items, total, and timestamp).",
+        "The user does not need to type the order ID or click a secondary button to see the order details after placing an order.",
+        "If the order details cannot be loaded, the UI shows a clear error state with a call-to-action to contact the business by phone and includes the order ID if available."
       ]
     },
     {
-      "id": "REQ-18",
-      "text": "Add routing and navigation to reach the Order Details page, including a dedicated route that supports direct linking with an Order ID in the URL.",
+      "id": "REQ-24",
+      "text": "Add an \"Online Payment\" option to the checkout experience as an explicit payment method selection, including UI for initiating payment via a deep link (e.g., UPI intent) and capturing an optional payment reference/transaction ID; include the selected payment method and optional reference in the order notes sent to the existing backend createOrder API (no backend changes).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "ADD ORDER DETAILS PAGE"
+          "AND PAYMENT ONLINE OPTION TO BE ADD"
         ]
       },
       "acceptanceCriteria": [
-        "A route is added in frontend/src/App.tsx for the Order Details page.",
-        "The route supports optional direct navigation with an Order ID (e.g., /order/$orderId or similar) so that /.../123 loads Order ID 123 without manual input.",
-        "The Order Confirmation page provides a clear link/button to open the Order Details page for the current confirmed order.",
-        "The app builds and existing routes (Home, Products, Cart, Checkout, Confirmation, Contact, Admin) continue to work unchanged."
+        "Checkout includes a required payment method choice (at minimum: \"Cash on Delivery\" and \"Online Payment\").",
+        "If \"Online Payment\" is selected, the UI presents a clear \"Pay Now\" action via a deep link and an optional input for a payment reference/transaction ID.",
+        "On order submission, the payment method and optional reference are appended to the notes payload sent to createOrder so it is visible on order confirmation/details screens.",
+        "If online payment configuration details are missing (e.g., no payee configured), the UI gracefully informs the user and still allows placing the order with an appropriate note."
+      ]
+    },
+    {
+      "id": "REQ-25",
+      "text": "After an order is booked, provide a \"Book Rapido Pickup\" option that helps the user request a Rapido pickup by opening Rapido in a new tab/app (deep link to Rapido website/app) and providing a copyable text summary containing the order ID and key order details for sharing with a rider.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "AND BOOK ORDER THEN BOOK RAPIDO TO COLLECT YOUR ORDER"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The post-order success screen shows a \"Book Rapido Pickup\" button/section.",
+        "Clicking the button opens Rapido (at minimum via https://rapido.bike/ ) in a new tab/window.",
+        "The UI provides a copy-to-clipboard action that copies a formatted pickup note containing at least: order ID, customer phone number, delivery address, and item list/quantities.",
+        "This feature does not block normal checkout and is optional to use."
       ]
     }
   ],
   "constraints": [
-    "Frontend paths listed as immutable must not be edited: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui.",
-    "Do not add new backend services; keep single-actor Motoko architecture.",
-    "Use English for all user-facing text."
+    "Do not edit files under frontend/src/components/ui (read-only UI components must be composed, not modified).",
+    "Do not modify frontend immutable paths (frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, and frontend/src/components/ui).",
+    "Backend remains a single Motoko actor in backend/main.mo; do not introduce additional backend services.",
+    "Do not add real payment gateway integrations (Stripe/Razorpay/etc.) or require external databases/services; implement online payment only via simple deep link / instructions and store details in the existing order notes field."
   ],
   "nonGoals": [
-    "Do not implement an 'all orders list' page or order history browsing.",
-    "Do not add or change authentication providers beyond existing Internet Identity support.",
-    "Do not change the existing backend access rule for getOrder (only order creator or admin can view)."
+    "Implementing a full Rapido API integration (ride creation, status tracking, webhooks).",
+    "Implementing real online payment processing, verification, or settlement (payment gateway, callbacks, refunds).",
+    "Changing the backend order schema/types for payment fields (payment method/reference should be included in notes only for this iteration)."
   ],
   "imageRequirements": {
     "required": [],

@@ -1,10 +1,10 @@
 {
-  "frontend/src/App.tsx": "Main application component with TanStack Router setup including new order lookup routes (/order and /order/$orderId), updated navigation with Track Order link, and complete layout with header/footer.",
+  "frontend/src/App.tsx": "Main application component with TanStack Router setup, navigation, cart functionality, and footer now including the AddToHomeScreen component above the copyright notice.",
   "frontend/src/pages/HomePage.tsx": "Homepage featuring hero section with brand messaging, features highlighting purity and quality, product preview grid, and call-to-action sections with contact information.",
   "frontend/src/pages/ProductsPage.tsx": "Products catalog page displaying dairy and frozen dessert items fetched from backend with aggressive refetch settings, organized by category with add-to-cart functionality and loading/error states.",
   "frontend/src/pages/CartPage.tsx": "Shopping cart page that fetches latest product prices, displays updated totals, highlights missing products, and prevents checkout when products are unavailable.",
-  "frontend/src/pages/CheckoutPage.tsx": "Checkout form that validates cart items against current product availability, blocks orders with missing products, and displays accurate pricing based on latest rates.",
-  "frontend/src/pages/OrderConfirmationPage.tsx": "Order confirmation page displaying order success message with a button to view full order details via properly typed Link component with params for TanStack Router.",
+  "frontend/src/pages/CheckoutPage.tsx": "Checkout form with required payment method selection (Cash on Delivery or Online Payment), optional transaction reference input, UPI deep link for online payment, and payment details appended to order notes.",
+  "frontend/src/pages/OrderConfirmationPage.tsx": "Post-checkout order confirmation page displaying full order details (customer info, address, items, total, timestamp) immediately after order creation, with Rapido pickup booking helper (deep link and copyable pickup note) and error recovery UI.",
   "frontend/src/pages/ContactPage.tsx": "Contact page displaying updated phone number 9494237076, business hours, and brand messaging about premium dairy products with natural ingredients.",
   "frontend/src/hooks/useQueries.ts": "React Query hooks for backend operations with explicit refetch calls after price mutations and aggressive refetch settings (staleTime: 0, refetchOnMount: 'always') to ensure latest product prices are always fetched from the backend.",
   "frontend/src/state/cart/CartContext.tsx": "Cart context provider managing cart state with sessionStorage persistence and a syncPrices method to update stored prices when product rates change.",
@@ -13,5 +13,12 @@
   "frontend/tailwind.config.js": "Tailwind configuration extending theme with warm color tokens and Inter font family for consistent typography.",
   "frontend/src/pages/AdminRatesPage.tsx": "Admin-only page with Internet Identity authentication that allows authorized users to view and update product prices individually or in bulk, now includes a manual \"Refresh Products\" button that triggers an explicit network refetch to display the latest backend prices.",
   "frontend/src/utils/cartPricing.ts": "Utility function that merges cart items with latest product data to calculate current prices, detect missing products, and compute accurate totals.",
-  "frontend/src/pages/OrderDetailsPage.tsx": "Order details lookup page with input validation, URL routing support, and comprehensive order display including formatted timestamp, customer info, items, and total amount with error handling."
+  "frontend/src/pages/OrderDetailsPage.tsx": "Order details lookup page with input validation, URL routing support, and comprehensive order display including formatted timestamp, customer info, items, and total amount with error handling.",
+  "frontend/public/manifest.webmanifest": "Web app manifest for PWA with DAIRY FIELD branding, standalone display mode, theme colors, and references to 192x192 and 512x512 app icons.",
+  "frontend/index.html": "HTML entry point with PWA meta tags including manifest link, theme-color, iOS-specific tags, and apple-touch-icon reference.",
+  "frontend/src/hooks/useAddToHomeScreen.ts": "Custom hook managing PWA installability state by capturing beforeinstallprompt events, detecting iOS/Safari, checking standalone mode, and exposing install prompt trigger function.",
+  "frontend/src/components/AddToHomeScreen.tsx": "Component rendering install UI with native prompt button for supported browsers, step-by-step iOS instructions, or installed confirmation message based on device and install state.",
+  "frontend/src/config/payment.ts": "Frontend-only configuration module for online payment details (UPI ID, payee name, fallback URL) with helper to detect if payment is configured.",
+  "frontend/src/utils/payment.ts": "Utility functions to build UPI payment deep links and format payment information for appending to order notes.",
+  "frontend/src/utils/rapidoPickupNote.ts": "Utility function that generates a formatted pickup note from an Order containing order ID, customer phone, address, and item list for Rapido delivery booking."
 }

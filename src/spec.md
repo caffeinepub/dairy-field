@@ -1,13 +1,15 @@
 # Specification
 
 ## Summary
-**Goal:** Add an Order Details page to look up and view a specific order by Order ID using the existing `getOrder(orderId)` API.
+**Goal:** Improve the post-checkout experience by automatically showing the new order’s details, adding an online payment selection flow, and providing an optional Rapido pickup deep link with a copyable order summary.
 
 **Planned changes:**
-- Create a new Order Details page with an Order ID (numeric) input, inline validation, and a submit action to fetch order data via the existing React Query hook pattern (`useGetOrder`).
-- Display fetched order information: Order ID, customer name, phone number, delivery address, optional notes, items with quantities, total amount, and a formatted timestamp.
-- Add routing and navigation for the Order Details page, including an optional Order ID in the URL for direct linking (e.g., visiting a URL with `/.../123` loads Order ID 123).
-- Add a link/button on the Order Confirmation page to open the Order Details page for the confirmed order.
-- Show loading and user-friendly English error states (including contact phone number `9000009707`) without impacting existing routes.
+- Update the successful checkout flow to navigate directly to the newly created order’s full details screen (no manual lookup/click-through required).
+- Add a required payment method selection in checkout (at minimum: Cash on Delivery, Online Payment).
+- For Online Payment, add a “Pay Now” deep link action and an optional input for payment reference/transaction ID.
+- Append the selected payment method and optional reference into the existing order notes sent to the createOrder API (no backend changes).
+- Add a post-order “Book Rapido Pickup” option that opens Rapido (https://rapido.bike/) and provides a copy-to-clipboard pickup note including order ID, customer phone, delivery address, and item list/quantities.
+- Add clear error handling if order details fail to load after checkout, including a call-to-action to contact the business by phone and the order ID if available.
+- Handle missing online payment configuration gracefully by informing the user and still allowing order placement with an appropriate note.
 
-**User-visible outcome:** Users can open an Order Details page, enter (or deep-link with) an Order ID to view the full order details, with validation, loading feedback, and clear error messaging.
+**User-visible outcome:** After placing an order, users are taken straight to that order’s details; during checkout they can choose Cash on Delivery or Online Payment (with a pay deep link and optional transaction reference); and after booking they can optionally open Rapido and copy a formatted pickup message with key order info.
