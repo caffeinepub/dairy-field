@@ -1,156 +1,36 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 19,
-  "summary": "Build an app/website for DAIRY FIELD to sell premium dairy products online (milk, curd, malai curd, khowa, cream, paneer, ghee variants), emphasizing purity/no artificial colour or essence, with customer contact via phone and WhatsApp. Remove Frozen Dessert items/category and add premium natural fruit/dry fruit/saffron offerings. Add enhanced post-checkout order details visibility, online payment option, and Rapido pickup booking integration.",
+  "projectStateVersion": 3,
+  "summary": "Implement and stabilize online payments in checkout, restricting payment method to a simplified Google Pay-only option for customers.",
   "architectural_notes": [
-    "Consider enabling PWA support (web app manifest + service worker) to allow Add to Home Screen / install prompt on mobile."
+    "Checkout payments should be limited to a single Google Pay (GPay) option tied to UPI number 9494237076, with a simplified customer flow."
   ],
   "known_issues": [
-    "Deployed site still shows old product rates (\"Version 1\" rates); latest rate changes not reflected/updated."
+    "Online payment via UPI ID is currently not working."
   ],
-  "isFixRequest": false,
+  "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-create-a-customer-facing-storefront-homepage-for-the-brand-dairy-field-that-clearly-communicates-the-business-sells-milk-curd-malai-curd-khowa-cream-paneer-ghee-fruit-ice-cream-and-ice-candy-products-are-pure-and-contain-no-artificial-colour-or-essence-and-customers-can-contact-the-business-at-phone-number-9000009707",
-      "title": "Create a customer-facing storefront homepage for the brand “DAIRY FIELD” that clearly communicates: the business sells milk, curd, malai curd, khowa, cream, paneer, ghee, fruit ice cream, and ice candy; products are “pure” and contain “no artificial colour or essence”; and customers can contact the business at phone number 9000009707.",
+      "id": "feature-update-the-payment-configuration-so-the-app-offers-only-one-online-payment-option-google-pay-to-phone-number-9494237076-remove-the-upi-id-option-entirely-and-make-google-pay-the-default",
+      "title": "Update the payment configuration so the app offers only one online payment option: Google Pay to phone number 9494237076 (remove the UPI ID option entirely and make Google Pay the default).",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-implement-a-product-catalog-ui-with-the-following-products-as-initial-items-milk-curd-malai-curd-khowa-cream-paneer-ghee-fruit-ice-cream-and-ice-candy-each-product-must-have-at-minimum-name-category-dairy-or-frozen-dessert-price-unit-e-g-liter-500g-pack-and-an-optional-short-description",
-      "title": "Implement a product catalog UI with the following products as initial items: milk, curd, malai curd, khowa, cream, paneer, ghee, fruit ice cream, and ice candy. Each product must have at minimum: name, category (Dairy or Frozen Dessert), price, unit (e.g., liter/500g/pack), and an optional short description.",
+      "id": "feature-simplify-the-checkout-payment-ui-to-a-google-pay-only-flow-that-is-easy-for-customers-remove-the-pay-to-dropdown-prominently-show-the-google-pay-number-9494237076-provide-one-tap-copy-actions-and-avoid-any-upi-id-specific-validation-error-messaging",
+      "title": "Simplify the checkout payment UI to a Google Pay-only flow that is easy for customers: remove the 'Pay To' dropdown, prominently show the Google Pay number (9494237076), provide one-tap copy actions, and avoid any UPI-ID-specific validation/error messaging.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-a-shopping-cart-flow-that-allows-customers-to-add-products-adjust-quantities-remove-items-and-see-an-order-summary-subtotal-and-total",
-      "title": "Add a shopping cart flow that allows customers to add products, adjust quantities, remove items, and see an order summary (subtotal and total).",
+      "id": "feature-ensure-order-records-continue-to-store-and-display-structured-payment-details-for-the-google-pay-phone-option-method-payee-label-value-optional-transaction-reference-on-the-order-confirmation-and-order-details-views",
+      "title": "Ensure order records continue to store and display structured payment details for the Google Pay phone option (method, payee label/value, optional transaction reference) on the Order Confirmation and Order Details views.",
       "reqIds": [
         "REQ-3"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-implement-a-checkout-form-and-order-placement-flow-where-a-customer-can-submit-an-order-containing-customer-name-phone-number-delivery-address-optional-notes-and-the-list-of-cart-items-with-quantities-after-successful-submission-show-an-order-confirmation-screen-with-an-order-id-and-a-reminder-that-customers-can-call-9000009707",
-      "title": "Implement a checkout form and order placement flow where a customer can submit an order containing: customer name, phone number, delivery address, optional notes, and the list of cart items with quantities. After successful submission, show an order confirmation screen with an order ID and a reminder that customers can call 9000009707.",
-      "reqIds": [
-        "REQ-4"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-apply-a-coherent-creative-visual-theme-suitable-for-a-pure-dairy-fresh-desserts-brand-using-a-warm-natural-palette-avoid-blue-purple-ensure-consistent-typography-spacing-and-component-styling-across-pages-home-products-cart-checkout-confirmation-contact",
-      "title": "Apply a coherent, creative visual theme suitable for a “pure dairy & fresh desserts” brand, using a warm, natural palette (avoid blue/purple). Ensure consistent typography, spacing, and component styling across pages (Home, Products, Cart, Checkout, Confirmation, Contact).",
-      "reqIds": [
-        "REQ-6"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-generate-and-include-basic-brand-imagery-as-static-assets-and-use-them-in-the-ui-do-not-serve-images-from-the-backend-place-generated-images-under-frontend-public-assets-generated-and-reference-them-from-the-react-app",
-      "title": "Generate and include basic brand imagery as static assets and use them in the UI (do not serve images from the backend). Place generated images under frontend/public/assets/generated and reference them from the React app.",
-      "reqIds": [
-        "REQ-7"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-an-owner-admin-ui-for-changing-product-rates-prices-from-the-frontend-using-internet-identity-login-and-persist-those-changes-via-the-backend-update-rates-method",
-      "title": "Add an owner/admin UI for changing product rates (prices) from the frontend, using Internet Identity login, and persist those changes via the backend update-rates method.",
-      "reqIds": [
-        "REQ-11"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-ensure-cart-and-checkout-totals-displayed-in-the-frontend-are-synchronized-with-the-latest-product-rates-from-the-backend-so-customers-see-correct-totals-even-if-prices-changed-after-items-were-added-to-the-cart",
-      "title": "Ensure cart and checkout totals displayed in the frontend are synchronized with the latest product rates from the backend, so customers see correct totals even if prices changed after items were added to the cart.",
-      "reqIds": [
-        "REQ-12"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-the-admin-rates-page-to-support-updating-all-product-rates-in-one-action-allow-editing-prices-for-multiple-products-and-provide-a-single-save-all-action-that-submits-all-changed-prices-and-then-refreshes-the-product-list",
-      "title": "Update the Admin Rates page to support updating all product rates in one action: allow editing prices for multiple products and provide a single \"Save All\" action that submits all changed prices and then refreshes the product list.",
-      "reqIds": [
-        "REQ-14"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-ensure-the-frontend-reliably-shows-the-latest-product-rates-immediately-after-an-admin-saves-changes-including-adding-a-manual-refresh-control-and-forcing-a-network-refetch-of-the-products-query-after-successful-price-updates",
-      "title": "Ensure the frontend reliably shows the latest product rates immediately after an admin saves changes, including adding a manual refresh control and forcing a network refetch of the products query after successful price updates.",
-      "reqIds": [
-        "REQ-16"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-new-order-details-page-that-allows-a-user-to-enter-an-order-id-and-view-the-full-order-information-by-fetching-the-order-via-the-existing-backend-getorder-orderid-api",
-      "title": "Add a new Order Details page that allows a user to enter an Order ID and view the full order information by fetching the order via the existing backend getOrder(orderId) API.",
-      "reqIds": [
-        "REQ-17"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-routing-and-navigation-to-reach-the-order-details-page-including-a-dedicated-route-that-supports-direct-linking-with-an-order-id-in-the-url",
-      "title": "Add routing and navigation to reach the Order Details page, including a dedicated route that supports direct linking with an Order ID in the URL.",
-      "reqIds": [
-        "REQ-18"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-enable-pwa-installation-so-the-dairy-field-website-can-be-added-to-a-customer-s-phone-home-screen-android-chrome-install-prompt-and-ios-safari-home-screen-instructions-including-adding-a-web-app-manifest-icons-and-required-html-metadata",
-      "title": "Enable PWA installation so the DAIRY FIELD website can be added to a customer’s phone home screen (Android/Chrome install prompt and iOS/Safari home-screen instructions), including adding a web app manifest, icons, and required HTML metadata.",
-      "reqIds": [
-        "REQ-20"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-an-in-app-add-to-home-screen-entry-point-in-the-ui-that-helps-users-install-save-the-site-on-their-phone-on-supported-browsers-show-an-install-button-that-triggers-the-native-install-prompt-on-ios-safari-show-clear-step-by-step-instructions-to-use-share-add-to-home-screen",
-      "title": "Add an in-app \"Add to Home Screen\" entry point in the UI that helps users install/save the site on their phone: on supported browsers show an install button that triggers the native install prompt; on iOS/Safari show clear step-by-step instructions to use Share → \"Add to Home Screen\".",
-      "reqIds": [
-        "REQ-21"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-ensure-the-generated-pwa-icons-are-available-as-static-assets-under-frontend-public-and-are-referenced-by-the-manifest-do-not-serve-images-from-the-backend",
-      "title": "Ensure the generated PWA icons are available as static assets under frontend/public and are referenced by the manifest (do not serve images from the backend).",
-      "reqIds": [
-        "REQ-22"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-the-post-checkout-flow-so-that-immediately-after-a-successful-order-placement-the-app-automatically-shows-the-full-order-details-for-that-new-order-without-requiring-the-user-to-manually-look-up-or-click-into-the-order-details-page",
-      "title": "Update the post-checkout flow so that immediately after a successful order placement, the app automatically shows the full order details for that new order without requiring the user to manually look up or click into the Order Details page.",
-      "reqIds": [
-        "REQ-23"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-an-online-payment-option-to-the-checkout-experience-as-an-explicit-payment-method-selection-including-ui-for-initiating-payment-via-a-deep-link-e-g-upi-intent-and-capturing-an-optional-payment-reference-transaction-id-include-the-selected-payment-method-and-optional-reference-in-the-order-notes-sent-to-the-existing-backend-createorder-api-no-backend-changes",
-      "title": "Add an \"Online Payment\" option to the checkout experience as an explicit payment method selection, including UI for initiating payment via a deep link (e.g., UPI intent) and capturing an optional payment reference/transaction ID; include the selected payment method and optional reference in the order notes sent to the existing backend createOrder API (no backend changes).",
-      "reqIds": [
-        "REQ-24"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-after-an-order-is-booked-provide-a-book-rapido-pickup-option-that-helps-the-user-request-a-rapido-pickup-by-opening-rapido-in-a-new-tab-app-deep-link-to-rapido-website-app-and-providing-a-copyable-text-summary-containing-the-order-id-and-key-order-details-for-sharing-with-a-rider",
-      "title": "After an order is booked, provide a \"Book Rapido Pickup\" option that helps the user request a Rapido pickup by opening Rapido in a new tab/app (deep link to Rapido website/app) and providing a copyable text summary containing the order ID and key order details for sharing with a rider.",
-      "reqIds": [
-        "REQ-25"
       ],
       "version": 1
     }
@@ -158,165 +38,12 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Create an online sales app/website for DAIRY FIELD (e-commerce storefront)",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-2",
-      "summary": "Product catalog for dairy items and desserts (milk, curd, malai curd, khowa, cream, paneer, ghee, fruit ice cream, ice candy)",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-3",
-      "summary": "Online ordering/checkout flow for customers to place orders",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-4",
-      "summary": "Branding/content to highlight 'no artificial colour or essence' and 'pure' positioning",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-5",
-      "summary": "Add contact details on site/app (phone: 9000009707) for customer support/orders",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-10",
-      "summary": "Create Motoko backend APIs for: listing products, creating an order, and retrieving an order by ID (for confirmation display). Store orders in canister state so they remain available after page refresh.",
-      "reqIds": [
-        "REQ-5"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-11",
-      "summary": "Add/update product catalog entries with specified unit pricing: Milk (1 L ₹100), Malai Curd (₹120), Cow Ghee (1 kg ₹1000)",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-12",
-      "summary": "Update the backend product catalog so that Milk is priced at ₹100 per 1L, and Malai Curd is priced at ₹120 (keep unit consistent with existing catalog unless explicitly changed).",
-      "reqIds": [
-        "REQ-8"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-13",
-      "summary": "Add a new backend product entry for \"Cow Ghee\" in category \"Dairy\" with unit \"1kg\" and price ₹1000.",
-      "reqIds": [
-        "REQ-9"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-14",
-      "summary": "Update product catalog pricing: Cream ₹600/kg, Khowa ₹600/kg, Paneer ₹600/kg, Buffalo Ghee ₹800/kg",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-15",
-      "summary": "Remove Frozen Dessert category/items from the storefront/catalog (e.g., fruit ice cream, ice candy)",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-16",
-      "summary": "Add premium product offerings based on natural fruits and dry fruits, including saffron (product entries + display in catalog)",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-17",
-      "summary": "Add WhatsApp contact number 9494237076 alongside phone contact for customer orders/support",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-18",
-      "summary": "Change/update product rates (pricing) across the catalog as requested by the owner",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-19",
-      "summary": "Add backend support to update product pricing (rates) for existing products without requiring code changes, while keeping the current `listProducts`, `createOrder`, and `getOrder` APIs working.",
-      "reqIds": [
-        "REQ-10"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-20",
-      "summary": "Add a backend admin-only API to update rates for multiple products in a single call, so the owner can update all product rates at once (e.g., submit a list of {productName, newPrice} pairs) while keeping the existing `updateProductPrice`, `listProducts`, `createOrder`, and `getOrder` APIs working.",
-      "reqIds": [
-        "REQ-13"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-21",
-      "summary": "Persist the product catalog (including admin-updated prices) across canister upgrades so that updated rates do not revert back to the default “Version 1” rates after redeploy/upgrade.",
-      "reqIds": [
-        "REQ-15"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-22",
-      "summary": "Add an Order Details page in the app to view full order information (lookup/display by Order ID, including customer info, items, totals, timestamp)",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-23",
-      "summary": "Update product rates as requested: Cream ₹150/250g, Ghee ₹500/500g, Khowa ₹300/500g, Paneer ₹300/500g, Fruit Base Ice Cream ₹300/L",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-24",
-      "summary": "Update the backend default product catalog pricing so that the following products return the new rates via `listProducts()`:\n- Cream: ₹150 per 250g\n- Ghee: ₹500 per 500g\n- Khowa: ₹300 per 500g\n- Paneer: ₹300 per 500g\n- Fruit Ice Cream (requested as “Fruit Base Ice Cream”): ₹300 per 1L\n\nKeep product names/keys and units consistent with the existing catalog entries unless explicitly stated above (e.g., keep the existing `unit` values of 250g, 500g, and 1L).",
-      "reqIds": [
-        "REQ-19"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-25",
-      "summary": "Add an “Add to Home Screen” (PWA install) option so the DAIRY FIELD website can be saved/installed on a customer’s phone like an app",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-26",
-      "summary": "Automatically show full Order Details immediately after an order is successfully placed (post-checkout), without requiring manual Order ID lookup",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-27",
-      "summary": "Add an online payment option to the checkout flow (customers can pay online while placing the order)",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-28",
-      "summary": "After booking an order, provide an option to book Rapido to collect/pick up the order (Rapido booking integration or deep-link)",
+      "summary": "Fix UPI payment and change checkout to offer only Google Pay (GPay) using UPI number 9494237076 with a simpler customer flow",
       "reqIds": [],
       "status": "pending"
     }
   ],
-  "gameProjectType": "none",
-  "projectName": "DAIRY FIELD",
+  "projectName": "Replace broken UPI-ID payments with Google Pay-only payment to 9494237076",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

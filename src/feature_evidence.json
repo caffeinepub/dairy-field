@@ -2,10 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-update-the-post-checkout-flow-so-that-immediately-after-a-successful-order-placement-the-app-automatically-shows-the-full-order-details-for-that-new-order-without-requiring-the-user-to-manually-look-up-or-click-into-the-order-details-page",
-      "featureTitle": "Update the post-checkout flow so that immediately after a successful order placement, the app automatically shows the full order details for that new order without requiring the user to manually look up or click into the Order Details page.",
+      "featureId": "feature-update-the-payment-configuration-so-the-app-offers-only-one-online-payment-option-google-pay-to-phone-number-9494237076-remove-the-upi-id-option-entirely-and-make-google-pay-the-default",
+      "featureTitle": "Update the payment configuration so the app offers only one online payment option: Google Pay to phone number 9494237076 (remove the UPI ID option entirely and make Google Pay the default).",
       "files": [
-        "frontend/src/pages/OrderConfirmationPage.tsx"
+        "frontend/src/config/payment.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -16,15 +16,33 @@
         "authorization@4.0.0"
       ],
       "testIds": [
-        "REQ-23"
+        "REQ-1"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-an-online-payment-option-to-the-checkout-experience-as-an-explicit-payment-method-selection-including-ui-for-initiating-payment-via-a-deep-link-e-g-upi-intent-and-capturing-an-optional-payment-reference-transaction-id-include-the-selected-payment-method-and-optional-reference-in-the-order-notes-sent-to-the-existing-backend-createorder-api-no-backend-changes",
-      "featureTitle": "Add an \"Online Payment\" option to the checkout experience as an explicit payment method selection, including UI for initiating payment via a deep link (e.g., UPI intent) and capturing an optional payment reference/transaction ID; include the selected payment method and optional reference in the order notes sent to the existing backend createOrder API (no backend changes).",
+      "featureId": "feature-simplify-the-checkout-payment-ui-to-a-google-pay-only-flow-that-is-easy-for-customers-remove-the-pay-to-dropdown-prominently-show-the-google-pay-number-9494237076-provide-one-tap-copy-actions-and-avoid-any-upi-id-specific-validation-error-messaging",
+      "featureTitle": "Simplify the checkout payment UI to a Google Pay-only flow that is easy for customers: remove the 'Pay To' dropdown, prominently show the Google Pay number (9494237076), provide one-tap copy actions, and avoid any UPI-ID-specific validation/error messaging.",
       "files": [
-        "frontend/src/config/payment.ts",
+        "frontend/src/pages/CheckoutPage.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-ensure-order-records-continue-to-store-and-display-structured-payment-details-for-the-google-pay-phone-option-method-payee-label-value-optional-transaction-reference-on-the-order-confirmation-and-order-details-views",
+      "featureTitle": "Ensure order records continue to store and display structured payment details for the Google Pay phone option (method, payee label/value, optional transaction reference) on the Order Confirmation and Order Details views.",
+      "files": [
         "frontend/src/pages/CheckoutPage.tsx",
         "frontend/src/utils/payment.ts"
       ],
@@ -37,27 +55,7 @@
         "authorization@4.0.0"
       ],
       "testIds": [
-        "REQ-24"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-after-an-order-is-booked-provide-a-book-rapido-pickup-option-that-helps-the-user-request-a-rapido-pickup-by-opening-rapido-in-a-new-tab-app-deep-link-to-rapido-website-app-and-providing-a-copyable-text-summary-containing-the-order-id-and-key-order-details-for-sharing-with-a-rider",
-      "featureTitle": "After an order is booked, provide a \"Book Rapido Pickup\" option that helps the user request a Rapido pickup by opening Rapido in a new tab/app (deep link to Rapido website/app) and providing a copyable text summary containing the order ID and key order details for sharing with a rider.",
-      "files": [
-        "frontend/src/pages/OrderConfirmationPage.tsx",
-        "frontend/src/utils/rapidoPickupNote.ts"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "authorization@4.0.0"
-      ],
-      "testIds": [
-        "REQ-25"
+        "REQ-3"
       ],
       "confidence": "high"
     }

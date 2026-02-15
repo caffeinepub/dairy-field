@@ -124,11 +124,13 @@ export enum UserRole {
 export interface backendInterface {
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    createGuestOrder(customerName: string, phoneNumber: string, address: string, notes: string | null, items: Array<CartItem>): Promise<bigint>;
     createOrder(customerName: string, phoneNumber: string, address: string, notes: string | null, items: Array<CartItem>): Promise<bigint>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getOrder(orderId: bigint): Promise<Order>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    isAdmin(): Promise<boolean>;
     isCallerAdmin(): Promise<boolean>;
     listProducts(): Promise<Array<Product>>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
@@ -163,6 +165,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.assignCallerUserRole(arg0, to_candid_UserRole_n1(this._uploadFile, this._downloadFile, arg1));
+            return result;
+        }
+    }
+    async createGuestOrder(arg0: string, arg1: string, arg2: string, arg3: string | null, arg4: Array<CartItem>): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.createGuestOrder(arg0, arg1, arg2, to_candid_opt_n3(this._uploadFile, this._downloadFile, arg3), arg4);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.createGuestOrder(arg0, arg1, arg2, to_candid_opt_n3(this._uploadFile, this._downloadFile, arg3), arg4);
             return result;
         }
     }
@@ -234,6 +250,20 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.getUserProfile(arg0);
             return from_candid_opt_n4(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async isAdmin(): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.isAdmin();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.isAdmin();
+            return result;
         }
     }
     async isCallerAdmin(): Promise<boolean> {

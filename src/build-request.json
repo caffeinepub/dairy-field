@@ -1,78 +1,87 @@
 {
   "kind": "build_request",
-  "title": "Auto-show order details after checkout, add online payment option, and Rapido pickup deep link",
-  "priority": "normal",
+  "title": "Replace broken UPI-ID payments with Google Pay-only payment to 9494237076",
+  "priority": "high",
   "requirements": [
     {
-      "id": "REQ-23",
-      "text": "Update the post-checkout flow so that immediately after a successful order placement, the app automatically shows the full order details for that new order without requiring the user to manually look up or click into the Order Details page.",
+      "id": "REQ-1",
+      "text": "Update the payment configuration so the app offers only one online payment option: Google Pay to phone number 9494237076 (remove the UPI ID option entirely and make Google Pay the default).",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "SHOW ORDER DETAILS AUTOMATICALLY WHEN ORDER DONE"
+          "online payment not working by upi id please add only gpay option only on 9494237076 with easy way for customer"
         ]
       },
       "acceptanceCriteria": [
-        "When an order is successfully created from Checkout, the user is taken directly to a screen that shows full order details for the newly created order (customer info, address, items, total, and timestamp).",
-        "The user does not need to type the order ID or click a secondary button to see the order details after placing an order.",
-        "If the order details cannot be loaded, the UI shows a clear error state with a call-to-action to contact the business by phone and includes the order ID if available."
+        "In frontend/src/config/payment.ts, PAYMENT_CONFIG.payees contains only one payee: id='gpay-phone', type='phone', value='9494237076'.",
+        "PAYMENT_CONFIG.defaultPayeeId is set to 'gpay-phone' (or omitted while still defaulting to 'gpay-phone').",
+        "No UPI ID payee (e.g., 'aliwaris@sbi') is present anywhere in the selectable options on the Checkout page."
       ]
     },
     {
-      "id": "REQ-24",
-      "text": "Add an \"Online Payment\" option to the checkout experience as an explicit payment method selection, including UI for initiating payment via a deep link (e.g., UPI intent) and capturing an optional payment reference/transaction ID; include the selected payment method and optional reference in the order notes sent to the existing backend createOrder API (no backend changes).",
+      "id": "REQ-2",
+      "text": "Simplify the checkout payment UI to a Google Pay-only flow that is easy for customers: remove the 'Pay To' dropdown, prominently show the Google Pay number (9494237076), provide one-tap copy actions, and avoid any UPI-ID-specific validation/error messaging.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "AND PAYMENT ONLINE OPTION TO BE ADD"
+          "please add only gpay option only on 9494237076 with easy way for customer"
         ]
       },
       "acceptanceCriteria": [
-        "Checkout includes a required payment method choice (at minimum: \"Cash on Delivery\" and \"Online Payment\").",
-        "If \"Online Payment\" is selected, the UI presents a clear \"Pay Now\" action via a deep link and an optional input for a payment reference/transaction ID.",
-        "On order submission, the payment method and optional reference are appended to the notes payload sent to createOrder so it is visible on order confirmation/details screens.",
-        "If online payment configuration details are missing (e.g., no payee configured), the UI gracefully informs the user and still allows placing the order with an appropriate note."
+        "On frontend/src/pages/CheckoutPage.tsx, the payment section no longer renders a Select dropdown for payees.",
+        "The payment section displays the payee label and phone number 9494237076 in a prominent, copy-friendly format.",
+        "The payment section includes a 'Copy Google Pay Number' action that copies '9494237076' to the clipboard and provides visible confirmation (toast or inline message).",
+        "The payment section includes a 'Copy Amount' action that copies the exact total amount (e.g., '₹123' or '123') to the clipboard and provides visible confirmation.",
+        "Clicking the primary payment CTA does not call buildUpiDeepLink with a configuration that can produce the current error 'Phone numbers cannot be used for UPI payment links.'"
       ]
     },
     {
-      "id": "REQ-25",
-      "text": "After an order is booked, provide a \"Book Rapido Pickup\" option that helps the user request a Rapido pickup by opening Rapido in a new tab/app (deep link to Rapido website/app) and providing a copyable text summary containing the order ID and key order details for sharing with a rider.",
+      "id": "REQ-3",
+      "text": "Ensure order records continue to store and display structured payment details for the Google Pay phone option (method, payee label/value, optional transaction reference) on the Order Confirmation and Order Details views.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "AND BOOK ORDER THEN BOOK RAPIDO TO COLLECT YOUR ORDER"
+          "online payment not working by upi id please add only gpay option only on 9494237076"
         ]
       },
       "acceptanceCriteria": [
-        "The post-order success screen shows a \"Book Rapido Pickup\" button/section.",
-        "Clicking the button opens Rapido (at minimum via https://rapido.bike/ ) in a new tab/window.",
-        "The UI provides a copy-to-clipboard action that copies a formatted pickup note containing at least: order ID, customer phone number, delivery address, and item list/quantities.",
-        "This feature does not block normal checkout and is optional to use."
+        "When an order is placed, the notes include a [PAYMENT_INFO] block produced by formatPaymentInfoForNotes with PayeeType='phone', PayeeLabel indicating Google Pay, and PayeeValue='9494237076'.",
+        "On frontend/src/pages/OrderConfirmationPage.tsx, PaymentDetailsSection renders the Google Pay label and phone number when the order contains the structured payment info.",
+        "On frontend/src/pages/OrderDetailsPage.tsx, payment details render consistently with Order Confirmation when structured payment info exists.",
+        "The transaction reference field remains optional and, when provided, is shown in PaymentDetailsSection."
       ]
     }
   ],
   "constraints": [
-    "Do not edit files under frontend/src/components/ui (read-only UI components must be composed, not modified).",
-    "Do not modify frontend immutable paths (frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, and frontend/src/components/ui).",
-    "Backend remains a single Motoko actor in backend/main.mo; do not introduce additional backend services.",
-    "Do not add real payment gateway integrations (Stripe/Razorpay/etc.) or require external databases/services; implement online payment only via simple deep link / instructions and store details in the existing order notes field."
+    "Do not edit any files under frontend/src/components/ui or other paths listed in SYSTEM_CONTEXT.frontend.immutablePaths.",
+    "Keep backend architecture as a single Motoko actor; do not introduce additional backend services."
   ],
   "nonGoals": [
-    "Implementing a full Rapido API integration (ride creation, status tracking, webhooks).",
-    "Implementing real online payment processing, verification, or settlement (payment gateway, callbacks, refunds).",
-    "Changing the backend order schema/types for payment fields (payment method/reference should be included in notes only for this iteration)."
+    "Integrating external payment gateways (e.g., Stripe, Razorpay) or verifying payment status automatically.",
+    "Adding multiple UPI apps/options beyond Google Pay.",
+    "Changing product/catalog or cart pricing logic."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

@@ -3,18 +3,29 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ShoppingCart, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ShoppingCart, AlertCircle, RefreshCw } from 'lucide-react';
 import { useCart } from '@/state/cart/CartContext';
 import { toast } from 'sonner';
+import { useState } from 'react';
 
 export default function ProductsPage() {
-  const { data: products, isLoading, error } = useProducts();
+  const { data: products, isLoading, error, refetch } = useProducts();
   const { addItem } = useCart();
+  const [isRetrying, setIsRetrying] = useState(false);
 
   const handleAddToCart = (productName: string, price: bigint) => {
     addItem(productName, price);
     toast.success(`${productName} added to cart!`);
+  };
+
+  const handleRetry = async () => {
+    setIsRetrying(true);
+    try {
+      await refetch();
+    } finally {
+      setIsRetrying(false);
+    }
   };
 
   if (isLoading) {
@@ -46,8 +57,19 @@ export default function ProductsPage() {
       <div className="container py-12">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Unable to load products. Please try again later.
+          <AlertTitle>Unable to Load Products</AlertTitle>
+          <AlertDescription className="mt-2 space-y-3">
+            <p>We couldn't load the product catalog. This might be a temporary connection issue.</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRetry}
+              disabled={isRetrying}
+              className="gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${isRetrying ? 'animate-spin' : ''}`} />
+              {isRetrying ? 'Retrying...' : 'Retry'}
+            </Button>
           </AlertDescription>
         </Alert>
       </div>
@@ -67,15 +89,23 @@ export default function ProductsPage() {
     );
   }
 
-  const dairyProducts = products.filter(p => p.category === 'Dairy');
-  const frozenDesserts = products.filter(p => p.category === 'Frozen Dessert');
+  // Filter out removed products and normalize category strings
+  const filteredProducts = products.filter(p => p.name !== 'Fruit Ice Cream');
+  
+  const dairyProducts = filteredProducts
+    .filter(p => p.category.trim() === 'Dairy')
+    .sort((a, b) => a.name.localeCompare(b.name));
+  
+  const frozenDesserts = filteredProducts
+    .filter(p => p.category.trim() === 'Frozen Dessert')
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="container py-12">
       <div className="mb-12 text-center">
         <h1 className="text-4xl font-bold mb-4">Our Products</h1>
         <p className="text-muted-foreground max-w-2xl mx-auto">
-          Fresh, pure dairy products and delicious frozen desserts with no artificial colour or essence.
+          Fresh, pure dairy products and delicious ice cream with no artificial colour or essence.
         </p>
       </div>
 
@@ -84,6 +114,7 @@ export default function ProductsPage() {
           <div className="flex items-center gap-3 mb-6">
             <h2 className="text-2xl font-semibold">Dairy Products</h2>
             <Badge variant="secondary">Pure & Natural</Badge>
+            <Badge variant="outline">{dairyProducts.length} items</Badge>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {dairyProducts.map((product) => (
@@ -121,8 +152,9 @@ export default function ProductsPage() {
       {frozenDesserts.length > 0 && (
         <section>
           <div className="flex items-center gap-3 mb-6">
-            <h2 className="text-2xl font-semibold">Frozen Desserts</h2>
-            <Badge variant="secondary">Delicious Treats</Badge>
+            <h2 className="text-2xl font-semibold">Ice Cream</h2>
+            <Badge variant="secondary">Natural Fruit Base, Cream Milk & Dry Fruits</Badge>
+            <Badge variant="outline">{frozenDesserts.length} items</Badge>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {frozenDesserts.map((product) => (
@@ -130,7 +162,7 @@ export default function ProductsPage() {
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <CardTitle className="text-xl">{product.name}</CardTitle>
-                    <Badge variant="outline">{product.category}</Badge>
+                    <Badge variant="outline">Ice Cream</Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="flex-1">

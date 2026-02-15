@@ -2,18 +2,14 @@ import Time "mo:core/Time";
 import Map "mo:core/Map";
 import Text "mo:core/Text";
 import Runtime "mo:core/Runtime";
-import Order "mo:core/Order";
 import Array "mo:core/Array";
+import Order "mo:core/Order";
 import Principal "mo:core/Principal";
-
-
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 
-// Specify the data migration function in with-clause
-
 actor {
-  // Initialize the access control system
+  // Initialize the user system state
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
 
@@ -28,7 +24,7 @@ actor {
 
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can access profiles");
+      Runtime.trap("Unauthorized: Only users can view their profiles");
     };
     userProfiles.get(caller);
   };
@@ -45,6 +41,11 @@ actor {
       Runtime.trap("Unauthorized: Only users can save profiles");
     };
     userProfiles.add(caller, profile);
+  };
+
+  // Function to check if the caller is an admin
+  public query ({ caller }) func isAdmin() : async Bool {
+    AccessControl.isAdmin(accessControlState, caller);
   };
 
   // Product and Order Types
@@ -107,28 +108,28 @@ actor {
     {
       name = "Khowa";
       category = "Dairy";
-      price = 300; // Updated price
+      price = 300;
       unit = "500g";
       description = ?"Thickened milk used in Indian sweets";
     },
     {
       name = "Cream";
       category = "Dairy";
-      price = 150; // Updated price
+      price = 150;
       unit = "250g";
       description = ?"Rich dairy cream";
     },
     {
       name = "Paneer";
       category = "Dairy";
-      price = 300; // Updated price
+      price = 300;
       unit = "500g";
       description = ?"Indian cottage cheese";
     },
     {
       name = "Ghee";
       category = "Dairy";
-      price = 500; // Updated price
+      price = 500;
       unit = "500g";
       description = ?"Clarified butter";
     },
@@ -140,31 +141,130 @@ actor {
       description = ?"Premium cow ghee";
     },
     {
-      name = "Fruit Ice Cream";
-      category = "Frozen Dessert";
-      price = 300; // Updated price and product name to "Fruit Ice Cream"
-      unit = "1L";
-      description = ?"Delicious fruit-flavored ice cream";
-    },
-    {
       name = "Ice Candy";
       category = "Frozen Dessert";
       price = 20;
       unit = "Pack";
       description = ?"Fruity frozen treats";
     },
+    {
+      name = "Malai Bun";
+      category = "Dairy";
+      price = 60;
+      unit = "each";
+      description = ?"Sweet naan bread with cream filling";
+    },
+    {
+      name = "Malai Salad";
+      category = "Dairy";
+      price = 160;
+      unit = "each";
+      description = ?"Creamy fruit salad with dairy malai";
+    },
+    {
+      name = "Lassi";
+      category = "Dairy";
+      price = 60;
+      unit = "each";
+      description = ?"Traditional yogurt-based drink";
+    },
+    {
+      name = "Mango Lassi";
+      category = "Dairy";
+      price = 80;
+      unit = "each";
+      description = ?"Lassi with mango flavor";
+    },
+    {
+      name = "Strawberry Lassi";
+      category = "Dairy";
+      price = 80;
+      unit = "each";
+      description = ?"Lassi with strawberry flavor";
+    },
+    {
+      name = "Vanilla Lassi";
+      category = "Dairy";
+      price = 80;
+      unit = "each";
+      description = ?"Lassi with vanilla flavor";
+    },
+    {
+      name = "Butter Milk";
+      category = "Dairy";
+      price = 60;
+      unit = "each";
+      description = ?"Traditional fermented dairy drink (chaas)";
+    },
+    {
+      name = "Family Party Ice Cream Pack";
+      category = "Frozen Dessert";
+      price = 900;
+      unit = "4L";
+      description = ?"Large ice cream container for family parties";
+    },
+    {
+      name = "Lavish Pot";
+      category = "Frozen Dessert";
+      price = 200;
+      unit = "3 scoops";
+      description = ?"Ice cream set with three different flavors";
+    },
   ];
 
   var products = Map.fromIter<Text, Product>(productDefaults.map(func(p) { (p.name, p) }).values());
 
-  // Public function - anyone can list products (catalog browsing)
+  // Admin-only function - only admins can update product prices
+  public shared ({ caller }) func updateProductPrice(productName : Text, newPrice : Nat) : async () {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized: Only admins can update product prices");
+    };
+
+    switch (products.get(productName)) {
+      case (null) { Runtime.trap("Product not found") };
+      case (?product) {
+        let updatedProduct = { product with price = newPrice };
+        products.add(productName, updatedProduct);
+      };
+    };
+  };
+
+  // Query function - anyone can list products (catalog browsing)
   public query ({ caller }) func listProducts() : async [Product] {
     let sorted = products.toArray().map(func((k, v)) { v }).sort();
     sorted;
   };
 
-  // Public function - anyone can create orders (customers placing orders)
-  public shared ({ caller }) func createOrder(
+  // Admin-only function - batch update product prices
+  public shared ({ caller }) func updateProductPrices(priceUpdates : [(Text, Nat)]) : async () {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized: Only admins can update product prices");
+    };
+
+    for ((productName, newPrice) in priceUpdates.values()) {
+      switch (products.get(productName)) {
+        case (null) {};
+        case (?product) {
+          let updatedProduct = { product with price = newPrice };
+          products.add(productName, updatedProduct);
+        };
+      };
+    };
+  };
+
+  func calculateTotal(items : [CartItem]) : Nat {
+    var total = 0;
+    for (item in items.values()) {
+      switch (products.get(item.productName)) {
+        case (null) { Runtime.trap("Product not found") };
+        case (?product) { total += product.price * item.quantity };
+      };
+    };
+    total;
+  };
+
+  // New function to allow guest orders (no authentication required)
+  public shared ({ caller }) func createGuestOrder(
     customerName : Text,
     phoneNumber : Text,
     address : Text,
@@ -189,15 +289,34 @@ actor {
     orderId;
   };
 
-  func calculateTotal(items : [CartItem]) : Nat {
-    var total = 0;
-    for (item in items.values()) {
-      switch (products.get(item.productName)) {
-        case (null) { Runtime.trap("Product not found") };
-        case (?product) { total += product.price * item.quantity };
-      };
+  // User-only function - authenticated users can create orders with authentication
+  public shared ({ caller }) func createOrder(
+    customerName : Text,
+    phoneNumber : Text,
+    address : Text,
+    notes : ?Text,
+    items : [CartItem],
+  ) : async Nat {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can create orders");
     };
-    total;
+
+    let totalAmount = calculateTotal(items);
+    let order : Order = {
+      id = nextOrderId;
+      customerName;
+      phoneNumber;
+      address;
+      notes;
+      items;
+      totalAmount;
+      timestamp = Time.now();
+      createdBy = caller;
+    };
+    orders.add(nextOrderId, order);
+    let orderId = nextOrderId;
+    nextOrderId += 1;
+    orderId;
   };
 
   // Restricted function - only order creator or admin can view
@@ -210,38 +329,6 @@ actor {
           Runtime.trap("Unauthorized: Can only view your own orders");
         };
         order;
-      };
-    };
-  };
-
-  // Admin-only function - only admins can update product prices
-  public shared ({ caller }) func updateProductPrice(productName : Text, newPrice : Nat) : async () {
-    if (not (AccessControl.isAdmin(accessControlState, caller))) {
-      Runtime.trap("Unauthorized: Only admins can update product prices");
-    };
-
-    switch (products.get(productName)) {
-      case (null) { Runtime.trap("Product not found") };
-      case (?product) {
-        let updatedProduct = { product with price = newPrice };
-        products.add(productName, updatedProduct);
-      };
-    };
-  };
-
-  // Admin-only function - batch update product prices
-  public shared ({ caller }) func updateProductPrices(priceUpdates : [(Text, Nat)]) : async () {
-    if (not (AccessControl.isAdmin(accessControlState, caller))) {
-      Runtime.trap("Unauthorized: Only admins can update product prices");
-    };
-
-    for ((productName, newPrice) in priceUpdates.values()) {
-      switch (products.get(productName)) {
-        case (null) {};
-        case (?product) {
-          let updatedProduct = { product with price = newPrice };
-          products.add(productName, updatedProduct);
-        };
       };
     };
   };

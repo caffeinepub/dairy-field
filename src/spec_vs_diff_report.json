@@ -1,18 +1,16 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-15T09:47:27.679Z",
-  "summary": "The diff implements the requested post-checkout order-details auto-display via the confirmation page, adds a required payment method selection with an online payment deep link and optional transaction reference appended into order notes (frontend-only, no backend changes), and adds an optional Rapido pickup helper on the post-order screen with a Rapido deep link and copy-to-clipboard pickup note. No unrequested features are clearly evidenced beyond these requirements.",
+  "generatedAt": "2026-02-15T15:57:17.481Z",
+  "summary": "Diff implements Google Pay-only payee configuration (phone 9494237076) and appears to update Checkout to a copy-friendly Google Pay flow, while retaining UPI deep-link utilities (likely unused). No clear evidence in the provided diff summary shows missing requested behavior, but some Acceptance Criteria cannot be fully verified due to truncation and lack of explicit diffs for OrderConfirmation/OrderDetails pages.",
   "missing_requirements": [],
   "hallucinated_features": [],
-  "confidence": 0.78,
+  "confidence": 0.62,
   "changed_files": [
     "frontend-file-summaries.txt",
     "frontend/src/config/payment.ts",
     "frontend/src/pages/CheckoutPage.tsx",
-    "frontend/src/pages/OrderConfirmationPage.tsx",
     "frontend/src/utils/payment.ts",
-    "frontend/src/utils/rapidoPickupNote.ts",
     "project_state.json"
   ]
 }

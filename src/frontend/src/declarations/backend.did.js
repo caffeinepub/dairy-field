@@ -44,6 +44,11 @@ export const Product = IDL.Record({
 export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'createGuestOrder' : IDL.Func(
+      [IDL.Text, IDL.Text, IDL.Text, IDL.Opt(IDL.Text), IDL.Vec(CartItem)],
+      [IDL.Nat],
+      [],
+    ),
   'createOrder' : IDL.Func(
       [IDL.Text, IDL.Text, IDL.Text, IDL.Opt(IDL.Text), IDL.Vec(CartItem)],
       [IDL.Nat],
@@ -57,6 +62,7 @@ export const idlService = IDL.Service({
       [IDL.Opt(UserProfile)],
       ['query'],
     ),
+  'isAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'listProducts' : IDL.Func([], [IDL.Vec(Product)], ['query']),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
@@ -107,6 +113,11 @@ export const idlFactory = ({ IDL }) => {
   return IDL.Service({
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'createGuestOrder' : IDL.Func(
+        [IDL.Text, IDL.Text, IDL.Text, IDL.Opt(IDL.Text), IDL.Vec(CartItem)],
+        [IDL.Nat],
+        [],
+      ),
     'createOrder' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Text, IDL.Opt(IDL.Text), IDL.Vec(CartItem)],
         [IDL.Nat],
@@ -120,6 +131,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Opt(UserProfile)],
         ['query'],
       ),
+    'isAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'listProducts' : IDL.Func([], [IDL.Vec(Product)], ['query']),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),

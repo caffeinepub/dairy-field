@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from '@tanstack/react-router';
 import { useGetOrder } from '@/hooks/useQueries';
+import { parsePaymentInfo } from '@/utils/payment';
+import PaymentDetailsSection from '@/components/PaymentDetailsSection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -59,6 +61,12 @@ export default function OrderDetailsPage() {
       timeStyle: 'short',
     });
   };
+
+  const paymentInfo = order ? parsePaymentInfo(order.notes) : null;
+  const showPaymentDetails = paymentInfo && paymentInfo.method === 'Online Payment';
+  
+  // Extract user notes (everything before payment info block)
+  const userNotes = order?.notes?.split('[PAYMENT_INFO]')[0].trim();
 
   return (
     <div className="container py-12">
@@ -123,8 +131,8 @@ export default function OrderDetailsPage() {
             <AlertDescription>
               Unable to load order details. The order may not exist or you may not have permission to view it.
               Please contact us at{' '}
-              <a href="tel:9000009707" className="font-semibold underline">
-                9000009707
+              <a href="tel:9494237076" className="font-semibold underline">
+                9494237076
               </a>{' '}
               with your order ID for assistance.
             </AlertDescription>
@@ -133,6 +141,11 @@ export default function OrderDetailsPage() {
 
         {order && !isLoading && (
           <>
+            {/* Payment Details Section */}
+            {showPaymentDetails && paymentInfo && (
+              <PaymentDetailsSection paymentInfo={paymentInfo} />
+            )}
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -157,10 +170,10 @@ export default function OrderDetailsPage() {
                   <p className="font-medium">{order.address}</p>
                 </div>
 
-                {order.notes && (
+                {userNotes && (
                   <div>
                     <p className="text-muted-foreground text-sm mb-1">Order Notes</p>
-                    <p className="font-medium">{order.notes}</p>
+                    <p className="font-medium whitespace-pre-wrap">{userNotes}</p>
                   </div>
                 )}
 
@@ -196,8 +209,8 @@ export default function OrderDetailsPage() {
               <Phone className="h-4 w-4" />
               <AlertDescription>
                 For any questions about your order, please call us at{' '}
-                <a href="tel:9000009707" className="font-semibold hover:text-primary transition-colors">
-                  9000009707
+                <a href="tel:9494237076" className="font-semibold hover:text-primary transition-colors">
+                  9494237076
                 </a>
               </AlertDescription>
             </Alert>

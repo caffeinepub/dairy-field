@@ -1,15 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Improve the post-checkout experience by automatically showing the new order’s details, adding an online payment selection flow, and providing an optional Rapido pickup deep link with a copyable order summary.
+**Goal:** Replace the broken UPI-ID payment option with a Google Pay-only payment flow to phone number 9494237076, making checkout simpler and preventing UPI-link errors.
 
 **Planned changes:**
-- Update the successful checkout flow to navigate directly to the newly created order’s full details screen (no manual lookup/click-through required).
-- Add a required payment method selection in checkout (at minimum: Cash on Delivery, Online Payment).
-- For Online Payment, add a “Pay Now” deep link action and an optional input for payment reference/transaction ID.
-- Append the selected payment method and optional reference into the existing order notes sent to the createOrder API (no backend changes).
-- Add a post-order “Book Rapido Pickup” option that opens Rapido (https://rapido.bike/) and provides a copy-to-clipboard pickup note including order ID, customer phone, delivery address, and item list/quantities.
-- Add clear error handling if order details fail to load after checkout, including a call-to-action to contact the business by phone and the order ID if available.
-- Handle missing online payment configuration gracefully by informing the user and still allowing order placement with an appropriate note.
+- Update `frontend/src/config/payment.ts` to remove all UPI-ID payees and keep only one payee for Google Pay by phone number `9494237076`, set as the default.
+- Simplify `frontend/src/pages/CheckoutPage.tsx` payment UI to remove the payee selector and instead prominently display the Google Pay number with actions to copy the number and copy the exact total amount, including visible confirmation.
+- Ensure the primary payment CTA no longer builds a UPI deep link/config that triggers phone-number UPI link errors.
+- Keep structured payment details for the Google Pay phone option in order records (including optional transaction reference) and display them consistently on `OrderConfirmationPage` and `OrderDetailsPage`.
 
-**User-visible outcome:** After placing an order, users are taken straight to that order’s details; during checkout they can choose Cash on Delivery or Online Payment (with a pay deep link and optional transaction reference); and after booking they can optionally open Rapido and copy a formatted pickup message with key order info.
+**User-visible outcome:** Customers see a Google Pay-only payment section on checkout with the Google Pay number (9494237076) and one-tap copy buttons for both the number and the amount, and orders continue to show Google Pay payment details on confirmation and order details screens.

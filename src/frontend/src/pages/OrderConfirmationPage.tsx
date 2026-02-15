@@ -1,6 +1,8 @@
 import { useParams } from '@tanstack/react-router';
 import { useGetOrder } from '@/hooks/useQueries';
 import { generateRapidoPickupNote } from '@/utils/rapidoPickupNote';
+import { parsePaymentInfo } from '@/utils/payment';
+import PaymentDetailsSection from '@/components/PaymentDetailsSection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -71,6 +73,12 @@ export default function OrderConfirmationPage() {
     );
   }
 
+  const paymentInfo = parsePaymentInfo(order.notes);
+  const showPaymentDetails = paymentInfo && paymentInfo.method === 'Online Payment';
+
+  // Extract user notes (everything before payment info block)
+  const userNotes = order.notes?.split('[PAYMENT_INFO]')[0].trim();
+
   return (
     <div className="container py-12">
       <div className="max-w-2xl mx-auto space-y-6">
@@ -90,6 +98,11 @@ export default function OrderConfirmationPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Payment Details Section */}
+        {showPaymentDetails && paymentInfo && (
+          <PaymentDetailsSection paymentInfo={paymentInfo} />
+        )}
 
         {/* Full Order Details */}
         <Card>
@@ -118,10 +131,10 @@ export default function OrderConfirmationPage() {
               <p className="font-medium">{formatTimestamp(order.timestamp)}</p>
             </div>
             
-            {order.notes && (
+            {userNotes && (
               <div>
                 <p className="text-muted-foreground text-sm mb-1">Order Notes</p>
-                <p className="font-medium whitespace-pre-wrap">{order.notes}</p>
+                <p className="font-medium whitespace-pre-wrap">{userNotes}</p>
               </div>
             )}
             

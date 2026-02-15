@@ -1,21 +1,32 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { Product, Order, CartItem } from '../backend';
+import type { Product, Order, CartItem, UserProfile } from '../backend';
 
 export function useProducts() {
-  const { actor, isFetching } = useActor();
+  const { actor, isFetching: actorFetching } = useActor();
 
-  return useQuery<Product[]>({
+  const query = useQuery<Product[]>({
     queryKey: ['products'],
     queryFn: async () => {
-      if (!actor) return [];
-      return actor.listProducts();
+      if (!actor) throw new Error('Actor not initialized');
+      const products = await actor.listProducts();
+      return products;
     },
-    enabled: !!actor && !isFetching,
-    staleTime: 0, // Always consider data stale to ensure fresh fetches
-    refetchOnMount: 'always', // Always refetch when component mounts
-    refetchOnWindowFocus: true, // Refetch when window regains focus
+    enabled: !!actor && !actorFetching,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
+
+  // Show loading while actor is being created OR while query is loading
+  const isLoading = actorFetching || query.isLoading;
+  
+  return {
+    ...query,
+    isLoading,
+  };
 }
 
 export function useCreateOrder() {
@@ -48,6 +59,36 @@ export function useCreateOrder() {
   });
 }
 
+export function useCreateGuestOrder() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (orderData: {
+      customerName: string;
+      phoneNumber: string;
+      address: string;
+      notes: string | null;
+      items: CartItem[];
+    }) => {
+      if (!actor) throw new Error('Actor not initialized');
+      
+      const orderId = await actor.createGuestOrder(
+        orderData.customerName,
+        orderData.phoneNumber,
+        orderData.address,
+        orderData.notes,
+        orderData.items
+      );
+      
+      return orderId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+  });
+}
+
 export function useGetOrder(orderId: bigint) {
   const { actor, isFetching } = useActor();
 
@@ -61,16 +102,59 @@ export function useGetOrder(orderId: bigint) {
   });
 }
 
+export function useGetCallerUserProfile(enabled: boolean = true) {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  const query = useQuery<UserProfile | null>({
+    queryKey: ['currentUserProfile'],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.getCallerUserProfile();
+    },
+    enabled: !!actor && !actorFetching && enabled,
+    retry: false,
+  });
+
+  // Return custom state that properly reflects actor dependency
+  return {
+    ...query,
+    isLoading: actorFetching || query.isLoading,
+    isFetched: !!actor && query.isFetched,
+  };
+}
+
+export function useSaveCallerUserProfile() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (profile: UserProfile) => {
+      if (!actor) throw new Error('Actor not initialized');
+      await actor.saveCallerUserProfile(profile);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+    },
+  });
+}
+
 export function useIsAdmin() {
-  const { actor, isFetching } = useActor();
+  const { actor, isFetching: actorFetching } = useActor();
 
   return useQuery<boolean>({
     queryKey: ['isAdmin'],
     queryFn: async () => {
       if (!actor) return false;
-      return actor.isCallerAdmin();
+      try {
+        // Use isCallerAdmin (correct method name from backend interface)
+        return await actor.isCallerAdmin();
+      } catch (error) {
+        // If the call fails (e.g., user not authenticated), return false
+        return false;
+      }
     },
-    enabled: !!actor && !isFetching,
+    enabled: !!actor && !actorFetching,
+    retry: false,
   });
 }
 

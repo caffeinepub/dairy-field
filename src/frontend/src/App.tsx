@@ -5,119 +5,144 @@ import ProductsPage from './pages/ProductsPage';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
 import OrderConfirmationPage from './pages/OrderConfirmationPage';
-import OrderDetailsPage from './pages/OrderDetailsPage';
 import ContactPage from './pages/ContactPage';
+import OrderDetailsPage from './pages/OrderDetailsPage';
 import AdminRatesPage from './pages/AdminRatesPage';
 import { CartProvider, useCart } from './state/cart/CartContext';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Button } from './components/ui/button';
-import { useInternetIdentity } from './hooks/useInternetIdentity';
+import { Toaster } from './components/ui/sonner';
 import AddToHomeScreen from './components/AddToHomeScreen';
+import AdminOrderMessageBanner from './components/AdminOrderMessageBanner';
+import { useIsAdmin } from './hooks/useQueries';
+import { SiX, SiFacebook, SiInstagram } from 'react-icons/si';
+
+const queryClient = new QueryClient();
 
 function Layout() {
-  const { getCartCount } = useCart();
-  const { identity } = useInternetIdentity();
-  const cartCount = getCartCount();
-  const isAuthenticated = !!identity;
+  const { items } = useCart();
+  const cartItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  const { data: isAdmin, isLoading: isAdminLoading } = useIsAdmin();
+
+  // Only show admin UI when we have a definitive positive result
+  const showAdminUI = isAdmin === true && !isAdminLoading;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
-          <Link to="/" className="flex items-center space-x-2">
-            <img 
-              src="/assets/generated/dairy-field-logo.dim_512x512.png" 
-              alt="DAIRY FIELD" 
-              className="h-10 w-10 object-contain"
-            />
-            <span className="text-xl font-bold tracking-tight">DAIRY FIELD</span>
-          </Link>
-          
-          <nav className="flex items-center gap-6">
-            <Link to="/" className="text-sm font-medium transition-colors hover:text-primary">
-              Home
+      <header className="border-b sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <nav className="flex items-center justify-between">
+            <Link to="/" className="text-2xl font-bold text-primary hover:text-primary/80 transition-colors">
+              DAIRY FIELD
             </Link>
-            <Link to="/products" className="text-sm font-medium transition-colors hover:text-primary">
-              Products
-            </Link>
-            <Link to="/order" className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1">
-              <Package className="h-4 w-4" />
-              Track Order
-            </Link>
-            <Link to="/contact" className="text-sm font-medium transition-colors hover:text-primary">
-              Contact
-            </Link>
-            {isAuthenticated && (
-              <Link to="/admin" className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1">
-                <Shield className="h-4 w-4" />
-                Admin
+            <div className="flex items-center gap-6">
+              <Link to="/products" className="text-foreground/80 hover:text-foreground transition-colors font-medium">
+                Products
               </Link>
-            )}
-            <Link to="/cart">
-              <Button variant="outline" size="sm" className="relative">
-                <ShoppingCart className="h-4 w-4 mr-2" />
-                Cart
-                {cartCount > 0 && (
-                  <span className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
-                    {cartCount}
-                  </span>
-                )}
-              </Button>
-            </Link>
+              <Link to="/contact" className="text-foreground/80 hover:text-foreground transition-colors font-medium">
+                Contact
+              </Link>
+              <Link to="/order-details" className="text-foreground/80 hover:text-foreground transition-colors font-medium">
+                Track Order
+              </Link>
+              {showAdminUI && (
+                <Link to="/admin/rates" className="text-foreground/80 hover:text-foreground transition-colors font-medium flex items-center gap-1">
+                  <Shield className="h-4 w-4" />
+                  Admin
+                </Link>
+              )}
+              <Link to="/cart">
+                <Button variant="outline" size="sm" className="relative">
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  Cart
+                  {cartItemCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center font-bold">
+                      {cartItemCount}
+                    </span>
+                  )}
+                </Button>
+              </Link>
+            </div>
           </nav>
         </div>
       </header>
 
       <main className="flex-1">
+        {showAdminUI && (
+          <div className="container mx-auto px-4 pt-4">
+            <AdminOrderMessageBanner />
+          </div>
+        )}
         <Outlet />
       </main>
 
-      <footer className="border-t bg-muted/30 py-8 mt-12">
-        <div className="container">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+      <footer className="border-t bg-muted/30 mt-12">
+        <div className="container mx-auto px-4 py-8">
+          <div className="grid md:grid-cols-3 gap-8">
             <div>
-              <h3 className="font-semibold mb-3">DAIRY FIELD</h3>
+              <h3 className="font-bold text-lg mb-4 text-primary">DAIRY FIELD</h3>
               <p className="text-sm text-muted-foreground">
-                Pure dairy products and frozen desserts with no artificial colour or essence.
+                Premium dairy products delivered fresh to your doorstep. Quality you can trust, taste you'll love.
               </p>
             </div>
             <div>
-              <h3 className="font-semibold mb-3">Contact</h3>
-              <div className="flex items-center gap-2 text-sm">
-                <Phone className="h-4 w-4" />
-                <a href="tel:9494237076" className="hover:text-primary transition-colors">
-                  9494237076
+              <h4 className="font-semibold mb-4">Quick Links</h4>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <Link to="/products" className="text-muted-foreground hover:text-foreground transition-colors">
+                    Products
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
+                    Contact Us
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/order-details" className="text-muted-foreground hover:text-foreground transition-colors">
+                    Track Order
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Contact</h4>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4" />
+                  <span>9494237076</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  <span>Fresh Daily Delivery</span>
+                </div>
+              </div>
+              <div className="flex gap-4 mt-4">
+                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <SiFacebook className="h-5 w-5" />
+                </a>
+                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <SiInstagram className="h-5 w-5" />
+                </a>
+                <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <SiX className="h-5 w-5" />
                 </a>
               </div>
             </div>
-            <div>
-              <h3 className="font-semibold mb-3">Quick Links</h3>
-              <div className="flex flex-col gap-2 text-sm">
-                <Link to="/products" className="hover:text-primary transition-colors">
-                  Shop Products
-                </Link>
-                <Link to="/order" className="hover:text-primary transition-colors">
-                  Track Order
-                </Link>
-                <Link to="/contact" className="hover:text-primary transition-colors">
-                  Contact Us
-                </Link>
-              </div>
-            </div>
           </div>
-
-          {/* Add to Home Screen Component */}
-          <div className="mb-8">
+          
+          <div className="mt-8 pt-8 border-t">
             <AddToHomeScreen />
           </div>
 
-          <div className="pt-6 border-t text-center text-sm text-muted-foreground">
+          <div className="mt-4 pt-4 border-t text-center text-sm text-muted-foreground">
             <p>
-              © {new Date().getFullYear()} DAIRY FIELD. Built with ❤️ using{' '}
-              <a 
-                href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
+              © {new Date().getFullYear()} DAIRY FIELD. Built with love using{' '}
+              <a
+                href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(typeof window !== 'undefined' ? window.location.hostname : 'dairy-field')}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-primary transition-colors"
+                className="text-primary hover:underline"
               >
                 caffeine.ai
               </a>
@@ -125,6 +150,7 @@ function Layout() {
           </div>
         </div>
       </footer>
+      <Toaster />
     </div>
   );
 }
@@ -163,27 +189,21 @@ const confirmationRoute = createRoute({
   component: OrderConfirmationPage,
 });
 
-const orderLookupRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/order',
-  component: OrderDetailsPage,
-});
-
-const orderDetailsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/order/$orderId',
-  component: OrderDetailsPage,
-});
-
 const contactRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/contact',
   component: ContactPage,
 });
 
-const adminRoute = createRoute({
+const orderDetailsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/admin',
+  path: '/order-details',
+  component: OrderDetailsPage,
+});
+
+const adminRatesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/rates',
   component: AdminRatesPage,
 });
 
@@ -193,10 +213,9 @@ const routeTree = rootRoute.addChildren([
   cartRoute,
   checkoutRoute,
   confirmationRoute,
-  orderLookupRoute,
-  orderDetailsRoute,
   contactRoute,
-  adminRoute,
+  orderDetailsRoute,
+  adminRatesRoute,
 ]);
 
 const router = createRouter({ routeTree });
@@ -207,10 +226,14 @@ declare module '@tanstack/react-router' {
   }
 }
 
-export default function App() {
+function App() {
   return (
-    <CartProvider>
-      <RouterProvider router={router} />
-    </CartProvider>
+    <QueryClientProvider client={queryClient}>
+      <CartProvider>
+        <RouterProvider router={router} />
+      </CartProvider>
+    </QueryClientProvider>
   );
 }
+
+export default App;

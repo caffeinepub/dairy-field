@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, AlertCircle, CheckCircle2, Lock, Save, RefreshCw } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import type { Product } from '../backend';
 
 export default function AdminRatesPage() {
   const { login, clear, loginStatus, identity } = useInternetIdentity();
@@ -137,6 +138,14 @@ export default function AdminRatesPage() {
   const pendingChanges = getPendingChanges();
   const hasPendingChanges = pendingChanges.length > 0;
 
+  // Filter out removed products and sort by category then name for consistent display
+  const filteredProducts = products ? products.filter(p => p.name !== 'Fruit Ice Cream') : [];
+  const sortedProducts = [...filteredProducts].sort((a: Product, b: Product) => {
+    const categoryCompare = a.category.localeCompare(b.category);
+    if (categoryCompare !== 0) return categoryCompare;
+    return a.name.localeCompare(b.name);
+  });
+
   if (!isAuthenticated) {
     return (
       <div className="container py-12">
@@ -201,7 +210,12 @@ export default function AdminRatesPage() {
   return (
     <div className="container py-12">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Admin - Update Product Rates</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Admin - Update Product Rates</h1>
+          <p className="text-muted-foreground mt-2">
+            {sortedProducts.length} products available
+          </p>
+        </div>
         <div className="flex gap-2">
           <Button 
             onClick={handleRefresh} 
@@ -280,7 +294,7 @@ export default function AdminRatesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {products?.map((product) => {
+          {sortedProducts.map((product) => {
             const editingPrice = editingPrices[product.name];
             const hasChanges = editingPrice !== undefined && editingPrice !== String(Number(product.price));
 
@@ -292,43 +306,35 @@ export default function AdminRatesPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Unit</p>
-                    <p className="font-medium">{product.unit}</p>
-                  </div>
-
-                  <div>
                     <p className="text-sm text-muted-foreground mb-1">Current Price</p>
                     <p className="text-2xl font-bold">₹{Number(product.price)}</p>
+                    <p className="text-sm text-muted-foreground">per {product.unit}</p>
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor={`price-${product.name}`}>New Price (₹)</Label>
-                    <Input
-                      id={`price-${product.name}`}
-                      type="number"
-                      min="0"
-                      step="1"
-                      placeholder={String(Number(product.price))}
-                      value={editingPrice ?? ''}
-                      onChange={(e) => handlePriceChange(product.name, e.target.value)}
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        id={`price-${product.name}`}
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder={String(Number(product.price))}
+                        value={editingPrice ?? ''}
+                        onChange={(e) => handlePriceChange(product.name, e.target.value)}
+                      />
+                      <Button
+                        onClick={() => handleSavePrice(product.name, product.price)}
+                        disabled={!hasChanges || updatePrice.isPending}
+                        size="icon"
+                      >
+                        {updatePrice.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Save className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
-
-                  <Button
-                    onClick={() => handleSavePrice(product.name, product.price)}
-                    disabled={!hasChanges || updatePrice.isPending}
-                    className="w-full"
-                    variant="outline"
-                  >
-                    {updatePrice.isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      'Save Price'
-                    )}
-                  </Button>
                 </CardContent>
               </Card>
             );

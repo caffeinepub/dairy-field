@@ -41,11 +41,13 @@ export enum UserRole {
 }
 export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    createGuestOrder(customerName: string, phoneNumber: string, address: string, notes: string | null, items: Array<CartItem>): Promise<bigint>;
     createOrder(customerName: string, phoneNumber: string, address: string, notes: string | null, items: Array<CartItem>): Promise<bigint>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getOrder(orderId: bigint): Promise<Order>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    isAdmin(): Promise<boolean>;
     isCallerAdmin(): Promise<boolean>;
     listProducts(): Promise<Array<Product>>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
