@@ -1,0 +1,44 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-add-a-new-order-details-page-that-allows-a-user-to-enter-an-order-id-and-view-the-full-order-information-by-fetching-the-order-via-the-existing-backend-getorder-orderid-api",
+      "featureTitle": "Add a new Order Details page that allows a user to enter an Order ID and view the full order information by fetching the order via the existing backend getOrder(orderId) API.",
+      "files": [
+        "frontend/src/pages/OrderDetailsPage.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0"
+      ],
+      "testIds": [
+        "REQ-17"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-routing-and-navigation-to-reach-the-order-details-page-including-a-dedicated-route-that-supports-direct-linking-with-an-order-id-in-the-url",
+      "featureTitle": "Add routing and navigation to reach the Order Details page, including a dedicated route that supports direct linking with an Order ID in the URL.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/pages/OrderConfirmationPage.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0"
+      ],
+      "testIds": [
+        "REQ-18"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

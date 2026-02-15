@@ -1,0 +1,82 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-15T08:54:46.752Z",
+  "summary": "Implemented a new Order Details page and added routing/navigation to access it, including URL-based order ID. However, the Order Details page appears to always call `useGetOrder` (even when no valid ID is submitted), and several unrelated changes (phone number updates, refetch behavior, theme/admin/cart changes) were introduced that were not requested.",
+  "missing_requirements": [
+    {
+      "id": "REQ-17",
+      "requirement": "Entering an invalid Order ID (empty, non-numeric, or <= 0) does not call the backend and shows an inline validation message.",
+      "reason": "Inline validation messages are implemented, but `useGetOrder` is invoked unconditionally with `submittedOrderId || BigInt(0)`. The `shouldFetch` flag is computed but not used to gate the query call in the shown diff, so the backend may be called with `0` or before a valid submit.",
+      "evidence": [
+        "frontend/src/pages/OrderDetailsPage.tsx"
+      ]
+    },
+    {
+      "id": "REQ-17",
+      "requirement": "Errors are shown in a user-friendly English message (e.g., order not found / unauthorized) and include the contact phone number 9000009707.",
+      "reason": "Order Confirmation error message includes 9000009707, but the Order Details page’s error UI is truncated and does not show evidence that its error message includes 9000009707 or differentiates not-found/unauthorized cases.",
+      "evidence": [
+        "frontend/src/pages/OrderDetailsPage.tsx",
+        "frontend/src/pages/OrderConfirmationPage.tsx"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "Changed displayed contact phone number to 9494237076 (footer and Contact page), conflicting with the requirement that error messaging include contact number 9000009707 and introducing unrelated content changes.",
+      "reason": "BuildRequest did not ask to change contact phone number sitewide; only required including 9000009707 in Order Details error messaging.",
+      "evidence": [
+        "frontend/src/App.tsx",
+        "frontend-file-summaries.txt (frontend/src/pages/ContactPage.tsx)"
+      ]
+    },
+    {
+      "description": "Added/modified navigation item 'Track Order' in the main header.",
+      "reason": "BuildRequest only required routing/navigation to reach Order Details and a link from the Order Confirmation page; it did not request new top-nav items.",
+      "evidence": [
+        "frontend/src/App.tsx"
+      ]
+    },
+    {
+      "description": "Changed React Query behavior with aggressive refetch settings and explicit refetch calls after price mutations.",
+      "reason": "Not requested by REQ-17/REQ-18; unrelated to adding an Order Details lookup page.",
+      "evidence": [
+        "frontend-file-summaries.txt (frontend/src/hooks/useQueries.ts)"
+      ]
+    },
+    {
+      "description": "Added cart/sessionStorage price-sync and cart pricing utility changes.",
+      "reason": "Not requested; unrelated to the order-details lookup feature.",
+      "evidence": [
+        "frontend-file-summaries.txt (frontend/src/state/cart/CartContext.tsx)",
+        "frontend-file-summaries.txt (frontend/src/utils/cartPricing.ts)",
+        "frontend-file-summaries.txt (frontend/src/pages/CartPage.tsx)",
+        "frontend-file-summaries.txt (frontend/src/pages/CheckoutPage.tsx)"
+      ]
+    },
+    {
+      "description": "Theme/color palette updates and Tailwind configuration changes.",
+      "reason": "Not requested by this BuildRequest (which focused on Order Details page and routing).",
+      "evidence": [
+        "frontend-file-summaries.txt (frontend/src/index.css)",
+        "frontend-file-summaries.txt (frontend/tailwind.config.js)"
+      ]
+    },
+    {
+      "description": "Admin Rates page enhancement adding a manual 'Refresh Products' button.",
+      "reason": "Not requested; unrelated to order details lookup and routing.",
+      "evidence": [
+        "frontend-file-summaries.txt (frontend/src/pages/AdminRatesPage.tsx)"
+      ]
+    }
+  ],
+  "confidence": 0.72,
+  "changed_files": [
+    "frontend-file-summaries.txt",
+    "frontend/src/App.tsx",
+    "frontend/src/pages/OrderConfirmationPage.tsx",
+    "frontend/src/pages/OrderDetailsPage.tsx",
+    "project_state.json"
+  ]
+}

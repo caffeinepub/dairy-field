@@ -1,0 +1,59 @@
+{
+  "kind": "build_request",
+  "title": "Add Order Details page (lookup by Order ID)",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-17",
+      "text": "Add a new Order Details page that allows a user to enter an Order ID and view the full order information by fetching the order via the existing backend getOrder(orderId) API.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "ADD ORDER DETAILS PAGE"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A new page exists where the user can input an Order ID (numeric) and submit to load the order.",
+        "The page uses the existing React Query hook pattern (useGetOrder) to fetch and display: Order ID, customer name, phone number, delivery address, optional notes, items with quantities, total amount, and timestamp (formatted for display).",
+        "Loading state is shown while fetching; errors are shown in a user-friendly English message (e.g., order not found / unauthorized) and include the contact phone number 9000009707.",
+        "Entering an invalid Order ID (empty, non-numeric, or <= 0) does not call the backend and shows an inline validation message."
+      ]
+    },
+    {
+      "id": "REQ-18",
+      "text": "Add routing and navigation to reach the Order Details page, including a dedicated route that supports direct linking with an Order ID in the URL.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "ADD ORDER DETAILS PAGE"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A route is added in frontend/src/App.tsx for the Order Details page.",
+        "The route supports optional direct navigation with an Order ID (e.g., /order/$orderId or similar) so that /.../123 loads Order ID 123 without manual input.",
+        "The Order Confirmation page provides a clear link/button to open the Order Details page for the current confirmed order.",
+        "The app builds and existing routes (Home, Products, Cart, Checkout, Confirmation, Contact, Admin) continue to work unchanged."
+      ]
+    }
+  ],
+  "constraints": [
+    "Frontend paths listed as immutable must not be edited: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui.",
+    "Do not add new backend services; keep single-actor Motoko architecture.",
+    "Use English for all user-facing text."
+  ],
+  "nonGoals": [
+    "Do not implement an 'all orders list' page or order history browsing.",
+    "Do not add or change authentication providers beyond existing Internet Identity support.",
+    "Do not change the existing backend access rule for getOrder (only order creator or admin can view)."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  }
+}

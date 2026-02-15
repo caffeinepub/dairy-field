@@ -1,0 +1,46 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Add Order Details lookup page with URL routing",
+  "requirements": [
+    {
+      "id": "REQ-17",
+      "summary": "Create an Order Details lookup page that validates an Order ID and fetches/displays full order info using the existing useGetOrder React Query hook.",
+      "acceptanceCriteria": [
+        "A new page exists where the user can input an Order ID (numeric) and submit to load the order.",
+        "The page uses the existing React Query hook pattern (useGetOrder) to fetch and display: Order ID, customer name, phone number, delivery address, optional notes, items with quantities, total amount, and timestamp (formatted for display).",
+        "Loading state is shown while fetching; errors are shown in a user-friendly English message (e.g., order not found / unauthorized) and include the contact phone number 9000009707.",
+        "Entering an invalid Order ID (empty, non-numeric, or <= 0) does not call the backend and shows an inline validation message."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/OrderDetailsPage.tsx",
+          "operation": "create",
+          "description": "Add an Order Details page that (1) reads an optional orderId route param, (2) provides an Order ID input + submit, (3) validates empty/non-numeric/<=0 inputs with inline messaging and prevents fetching when invalid, and (4) uses the existing useGetOrder hook to fetch and render the full order details including a formatted timestamp, with loading and friendly error messaging that includes contact phone 9000009707. Use shadcn-ui components (e.g., Card, Button, Alert, Separator, Skeleton, form input components available in the project) for consistent UI; verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-18",
+      "summary": "Add routes and navigation to access the Order Details page, including direct links with an Order ID in the URL and a link from Order Confirmation.",
+      "acceptanceCriteria": [
+        "A route is added in frontend/src/App.tsx for the Order Details page.",
+        "The route supports optional direct navigation with an Order ID (e.g., /order/$orderId or similar) so that /.../123 loads Order ID 123 without manual input.",
+        "The Order Confirmation page provides a clear link/button to open the Order Details page for the current confirmed order.",
+        "The app builds and existing routes (Home, Products, Cart, Checkout, Confirmation, Contact, Admin) continue to work unchanged."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Register Order Details routes using TanStack Router: add a dedicated lookup route (e.g., /order) and a direct-link route with an Order ID param (e.g., /order/$orderId) that both render OrderDetailsPage. Add a navigation entry (e.g., in the header and/or footer quick links) to reach the lookup route without disrupting existing routes. If using shadcn-ui Button/link styling, verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/OrderConfirmationPage.tsx",
+          "operation": "modify",
+          "description": "Add a clear link/button on the confirmation screen to open the new Order Details page for the confirmed order (deep link using the current order id in the URL). Use existing styling patterns and shadcn-ui Button/Link composition as appropriate; verify the component's usage instructions before implementing."
+        }
+      ]
+    }
+  ]
+}

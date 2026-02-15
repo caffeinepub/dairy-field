@@ -1,0 +1,234 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 13,
+  "summary": "Build an app/website for DAIRY FIELD to sell premium dairy products online (milk, curd, malai curd, khowa, cream, paneer, ghee variants), emphasizing purity/no artificial colour or essence, with customer contact via phone and WhatsApp. Remove Frozen Dessert items/category and add premium natural fruit/dry fruit/saffron offerings.",
+  "architectural_notes": [],
+  "known_issues": [
+    "Deployed site still shows old product rates (\"Version 1\" rates); latest rate changes not reflected/updated."
+  ],
+  "isFixRequest": false,
+  "existing_features": [
+    {
+      "id": "feature-create-a-customer-facing-storefront-homepage-for-the-brand-dairy-field-that-clearly-communicates-the-business-sells-milk-curd-malai-curd-khowa-cream-paneer-ghee-fruit-ice-cream-and-ice-candy-products-are-pure-and-contain-no-artificial-colour-or-essence-and-customers-can-contact-the-business-at-phone-number-9000009707",
+      "title": "Create a customer-facing storefront homepage for the brand “DAIRY FIELD” that clearly communicates: the business sells milk, curd, malai curd, khowa, cream, paneer, ghee, fruit ice cream, and ice candy; products are “pure” and contain “no artificial colour or essence”; and customers can contact the business at phone number 9000009707.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-a-product-catalog-ui-with-the-following-products-as-initial-items-milk-curd-malai-curd-khowa-cream-paneer-ghee-fruit-ice-cream-and-ice-candy-each-product-must-have-at-minimum-name-category-dairy-or-frozen-dessert-price-unit-e-g-liter-500g-pack-and-an-optional-short-description",
+      "title": "Implement a product catalog UI with the following products as initial items: milk, curd, malai curd, khowa, cream, paneer, ghee, fruit ice cream, and ice candy. Each product must have at minimum: name, category (Dairy or Frozen Dessert), price, unit (e.g., liter/500g/pack), and an optional short description.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-shopping-cart-flow-that-allows-customers-to-add-products-adjust-quantities-remove-items-and-see-an-order-summary-subtotal-and-total",
+      "title": "Add a shopping cart flow that allows customers to add products, adjust quantities, remove items, and see an order summary (subtotal and total).",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-a-checkout-form-and-order-placement-flow-where-a-customer-can-submit-an-order-containing-customer-name-phone-number-delivery-address-optional-notes-and-the-list-of-cart-items-with-quantities-after-successful-submission-show-an-order-confirmation-screen-with-an-order-id-and-a-reminder-that-customers-can-call-9000009707",
+      "title": "Implement a checkout form and order placement flow where a customer can submit an order containing: customer name, phone number, delivery address, optional notes, and the list of cart items with quantities. After successful submission, show an order confirmation screen with an order ID and a reminder that customers can call 9000009707.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-apply-a-coherent-creative-visual-theme-suitable-for-a-pure-dairy-fresh-desserts-brand-using-a-warm-natural-palette-avoid-blue-purple-ensure-consistent-typography-spacing-and-component-styling-across-pages-home-products-cart-checkout-confirmation-contact",
+      "title": "Apply a coherent, creative visual theme suitable for a “pure dairy & fresh desserts” brand, using a warm, natural palette (avoid blue/purple). Ensure consistent typography, spacing, and component styling across pages (Home, Products, Cart, Checkout, Confirmation, Contact).",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-generate-and-include-basic-brand-imagery-as-static-assets-and-use-them-in-the-ui-do-not-serve-images-from-the-backend-place-generated-images-under-frontend-public-assets-generated-and-reference-them-from-the-react-app",
+      "title": "Generate and include basic brand imagery as static assets and use them in the UI (do not serve images from the backend). Place generated images under frontend/public/assets/generated and reference them from the React app.",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-an-owner-admin-ui-for-changing-product-rates-prices-from-the-frontend-using-internet-identity-login-and-persist-those-changes-via-the-backend-update-rates-method",
+      "title": "Add an owner/admin UI for changing product rates (prices) from the frontend, using Internet Identity login, and persist those changes via the backend update-rates method.",
+      "reqIds": [
+        "REQ-11"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-cart-and-checkout-totals-displayed-in-the-frontend-are-synchronized-with-the-latest-product-rates-from-the-backend-so-customers-see-correct-totals-even-if-prices-changed-after-items-were-added-to-the-cart",
+      "title": "Ensure cart and checkout totals displayed in the frontend are synchronized with the latest product rates from the backend, so customers see correct totals even if prices changed after items were added to the cart.",
+      "reqIds": [
+        "REQ-12"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-admin-rates-page-to-support-updating-all-product-rates-in-one-action-allow-editing-prices-for-multiple-products-and-provide-a-single-save-all-action-that-submits-all-changed-prices-and-then-refreshes-the-product-list",
+      "title": "Update the Admin Rates page to support updating all product rates in one action: allow editing prices for multiple products and provide a single \"Save All\" action that submits all changed prices and then refreshes the product list.",
+      "reqIds": [
+        "REQ-14"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-the-frontend-reliably-shows-the-latest-product-rates-immediately-after-an-admin-saves-changes-including-adding-a-manual-refresh-control-and-forcing-a-network-refetch-of-the-products-query-after-successful-price-updates",
+      "title": "Ensure the frontend reliably shows the latest product rates immediately after an admin saves changes, including adding a manual refresh control and forcing a network refetch of the products query after successful price updates.",
+      "reqIds": [
+        "REQ-16"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-new-order-details-page-that-allows-a-user-to-enter-an-order-id-and-view-the-full-order-information-by-fetching-the-order-via-the-existing-backend-getorder-orderid-api",
+      "title": "Add a new Order Details page that allows a user to enter an Order ID and view the full order information by fetching the order via the existing backend getOrder(orderId) API.",
+      "reqIds": [
+        "REQ-17"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-routing-and-navigation-to-reach-the-order-details-page-including-a-dedicated-route-that-supports-direct-linking-with-an-order-id-in-the-url",
+      "title": "Add routing and navigation to reach the Order Details page, including a dedicated route that supports direct linking with an Order ID in the URL.",
+      "reqIds": [
+        "REQ-18"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Create an online sales app/website for DAIRY FIELD (e-commerce storefront)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Product catalog for dairy items and desserts (milk, curd, malai curd, khowa, cream, paneer, ghee, fruit ice cream, ice candy)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Online ordering/checkout flow for customers to place orders",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Branding/content to highlight 'no artificial colour or essence' and 'pure' positioning",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Add contact details on site/app (phone: 9000009707) for customer support/orders",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-10",
+      "summary": "Create Motoko backend APIs for: listing products, creating an order, and retrieving an order by ID (for confirmation display). Store orders in canister state so they remain available after page refresh.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-11",
+      "summary": "Add/update product catalog entries with specified unit pricing: Milk (1 L ₹100), Malai Curd (₹120), Cow Ghee (1 kg ₹1000)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-12",
+      "summary": "Update the backend product catalog so that Milk is priced at ₹100 per 1L, and Malai Curd is priced at ₹120 (keep unit consistent with existing catalog unless explicitly changed).",
+      "reqIds": [
+        "REQ-8"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-13",
+      "summary": "Add a new backend product entry for \"Cow Ghee\" in category \"Dairy\" with unit \"1kg\" and price ₹1000.",
+      "reqIds": [
+        "REQ-9"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-14",
+      "summary": "Update product catalog pricing: Cream ₹600/kg, Khowa ₹600/kg, Paneer ₹600/kg, Buffalo Ghee ₹800/kg",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-15",
+      "summary": "Remove Frozen Dessert category/items from the storefront/catalog (e.g., fruit ice cream, ice candy)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-16",
+      "summary": "Add premium product offerings based on natural fruits and dry fruits, including saffron (product entries + display in catalog)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-17",
+      "summary": "Add WhatsApp contact number 9494237076 alongside phone contact for customer orders/support",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-18",
+      "summary": "Change/update product rates (pricing) across the catalog as requested by the owner",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-19",
+      "summary": "Add backend support to update product pricing (rates) for existing products without requiring code changes, while keeping the current `listProducts`, `createOrder`, and `getOrder` APIs working.",
+      "reqIds": [
+        "REQ-10"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-20",
+      "summary": "Add a backend admin-only API to update rates for multiple products in a single call, so the owner can update all product rates at once (e.g., submit a list of {productName, newPrice} pairs) while keeping the existing `updateProductPrice`, `listProducts`, `createOrder`, and `getOrder` APIs working.",
+      "reqIds": [
+        "REQ-13"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-21",
+      "summary": "Persist the product catalog (including admin-updated prices) across canister upgrades so that updated rates do not revert back to the default “Version 1” rates after redeploy/upgrade.",
+      "reqIds": [
+        "REQ-15"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-22",
+      "summary": "Add an Order Details page in the app to view full order information (lookup/display by Order ID, including customer info, items, totals, timestamp)",
+      "reqIds": [],
+      "status": "pending"
+    }
+  ],
+  "gameProjectType": "none",
+  "projectName": "DAIRY FIELD",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}
