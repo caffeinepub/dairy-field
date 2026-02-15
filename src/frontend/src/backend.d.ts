@@ -7,6 +7,17 @@ export interface None {
     __kind__: "None";
 }
 export type Option<T> = Some<T> | None;
+export interface OrderResponse {
+    id: bigint;
+    customerName: string;
+    createdBy: Principal;
+    totalAmount: bigint;
+    address: string;
+    notes?: string;
+    timestamp: bigint;
+    items: Array<CartItem>;
+    phoneNumber: string;
+}
 export interface CartItem {
     productName: string;
     quantity: bigint;
@@ -43,14 +54,17 @@ export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createGuestOrder(customerName: string, phoneNumber: string, address: string, notes: string | null, items: Array<CartItem>): Promise<bigint>;
     createOrder(customerName: string, phoneNumber: string, address: string, notes: string | null, items: Array<CartItem>): Promise<bigint>;
+    createProduct(product: Product): Promise<void>;
+    getAllOrders(): Promise<Array<Order>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getOrder(orderId: bigint): Promise<Order>;
+    getOrderById(orderId: bigint): Promise<OrderResponse | null>;
+    getProductsAdmin(): Promise<Array<Product>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
-    isAdmin(): Promise<boolean>;
     isCallerAdmin(): Promise<boolean>;
     listProducts(): Promise<Array<Product>>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
-    updateProductPrice(productName: string, newPrice: bigint): Promise<void>;
     updateProductPrices(priceUpdates: Array<[string, bigint]>): Promise<void>;
+    upsertProductsAdmin(productsArray: Array<Product>): Promise<void>;
 }

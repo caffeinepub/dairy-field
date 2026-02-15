@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { Product, Order, CartItem, UserProfile } from '../backend';
+import type { Product, Order, OrderResponse, CartItem, UserProfile } from '../backend';
 
 export function useProducts() {
   const { actor, isFetching: actorFetching } = useActor();
@@ -8,9 +8,22 @@ export function useProducts() {
   const query = useQuery<Product[]>({
     queryKey: ['products'],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not initialized');
-      const products = await actor.listProducts();
-      return products;
+      console.log('useProducts: Starting product fetch');
+      
+      if (!actor) {
+        console.error('useProducts: Actor not available');
+        throw new Error('Backend connection not available');
+      }
+
+      try {
+        console.log('useProducts: Calling listProducts()');
+        const products = await actor.listProducts();
+        console.log(`useProducts: Successfully loaded ${products.length} products`);
+        return products;
+      } catch (error) {
+        console.error('useProducts: listProducts() failed', error);
+        throw error;
+      }
     },
     enabled: !!actor && !actorFetching,
     staleTime: 0,
@@ -23,9 +36,13 @@ export function useProducts() {
   // Show loading while actor is being created OR while query is loading
   const isLoading = actorFetching || query.isLoading;
   
+  // Determine if this is an actor initialization error vs a query error
+  const isActorError = !actor && !actorFetching && query.error;
+  
   return {
     ...query,
     isLoading,
+    isActorError,
   };
 }
 
@@ -89,8 +106,37 @@ export function useCreateGuestOrder() {
   });
 }
 
+// Public order lookup - no authentication required
+// Normalizes backend OrderResponse | null to Order | null
+export function useGetOrderById(orderId: bigint | null) {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<Order | null>({
+    queryKey: ['order', orderId?.toString()],
+    queryFn: async () => {
+      if (!actor || !orderId || orderId <= 0n) return null;
+      
+      try {
+        const result = await actor.getOrderById(orderId);
+        
+        // Handle Motoko optional return - normalize to Order | null
+        if (!result) return null;
+        
+        // Backend returns OrderResponse which is compatible with Order
+        return result as Order;
+      } catch (error) {
+        console.error('Error fetching order:', error);
+        throw error;
+      }
+    },
+    enabled: !!actor && !actorFetching && !!orderId && orderId > 0n,
+    retry: false,
+  });
+}
+
+// Restricted order lookup - requires authentication
 export function useGetOrder(orderId: bigint) {
-  const { actor, isFetching } = useActor();
+  const { actor, isFetching: actorFetching } = useActor();
 
   return useQuery<Order>({
     queryKey: ['order', orderId.toString()],
@@ -98,7 +144,23 @@ export function useGetOrder(orderId: bigint) {
       if (!actor) throw new Error('Actor not initialized');
       return actor.getOrder(orderId);
     },
-    enabled: !!actor && !isFetching && orderId > 0n,
+    enabled: !!actor && !actorFetching && orderId > 0n,
+  });
+}
+
+export function useGetAllOrders() {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<Order[]>({
+    queryKey: ['orders'],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not initialized');
+      return actor.getAllOrders();
+    },
+    enabled: !!actor && !actorFetching,
+    refetchInterval: 10000, // Poll every 10 seconds for more responsive admin updates
+    refetchOnWindowFocus: true,
+    refetchOnMount: 'always',
   });
 }
 
@@ -115,7 +177,6 @@ export function useGetCallerUserProfile(enabled: boolean = true) {
     retry: false,
   });
 
-  // Return custom state that properly reflects actor dependency
   return {
     ...query,
     isLoading: actorFetching || query.isLoading,
@@ -145,16 +206,69 @@ export function useIsAdmin() {
     queryKey: ['isAdmin'],
     queryFn: async () => {
       if (!actor) return false;
-      try {
-        // Use isCallerAdmin (correct method name from backend interface)
-        return await actor.isCallerAdmin();
-      } catch (error) {
-        // If the call fails (e.g., user not authenticated), return false
-        return false;
-      }
+      return actor.isCallerAdmin();
     },
     enabled: !!actor && !actorFetching,
-    retry: false,
+  });
+}
+
+export function useIsCallerAdmin() {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<boolean>({
+    queryKey: ['isAdmin'],
+    queryFn: async () => {
+      if (!actor) return false;
+      return actor.isCallerAdmin();
+    },
+    enabled: !!actor && !actorFetching,
+  });
+}
+
+export function useCreateProduct() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (product: Product) => {
+      if (!actor) throw new Error('Actor not initialized');
+      await actor.createProduct(product);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['adminProducts'] });
+    },
+  });
+}
+
+export function useGetProductsAdmin() {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<Product[]>({
+    queryKey: ['adminProducts'],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not initialized');
+      return actor.getProductsAdmin();
+    },
+    enabled: !!actor && !actorFetching,
+    staleTime: 0,
+    refetchOnMount: 'always',
+  });
+}
+
+export function useUpsertProductsAdmin() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (products: Product[]) => {
+      if (!actor) throw new Error('Actor not initialized');
+      await actor.upsertProductsAdmin(products);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['adminProducts'] });
+    },
   });
 }
 
@@ -165,11 +279,11 @@ export function useUpdateProductPrice() {
   return useMutation({
     mutationFn: async ({ productName, newPrice }: { productName: string; newPrice: bigint }) => {
       if (!actor) throw new Error('Actor not initialized');
-      await actor.updateProductPrice(productName, newPrice);
+      await actor.updateProductPrices([[productName, newPrice]]);
     },
-    onSuccess: async () => {
-      // Force an immediate refetch from the backend
-      await queryClient.refetchQueries({ queryKey: ['products'] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['adminProducts'] });
     },
   });
 }
@@ -179,13 +293,13 @@ export function useUpdateProductPrices() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (priceUpdates: Array<[string, bigint]>) => {
+    mutationFn: async (priceUpdates: [string, bigint][]) => {
       if (!actor) throw new Error('Actor not initialized');
       await actor.updateProductPrices(priceUpdates);
     },
-    onSuccess: async () => {
-      // Force an immediate refetch from the backend
-      await queryClient.refetchQueries({ queryKey: ['products'] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['adminProducts'] });
     },
   });
 }

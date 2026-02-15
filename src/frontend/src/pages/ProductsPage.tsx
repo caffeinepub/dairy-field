@@ -4,13 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ShoppingCart, AlertCircle, RefreshCw } from 'lucide-react';
+import { ShoppingCart, AlertCircle, RefreshCw, WifiOff } from 'lucide-react';
 import { useCart } from '@/state/cart/CartContext';
 import { toast } from 'sonner';
 import { useState } from 'react';
+import { sanitizeError } from '@/utils/errorDisplay';
 
 export default function ProductsPage() {
-  const { data: products, isLoading, error, refetch } = useProducts();
+  const { data: products, isLoading, error, refetch, isActorError } = useProducts();
   const { addItem } = useCart();
   const [isRetrying, setIsRetrying] = useState(false);
 
@@ -20,9 +21,13 @@ export default function ProductsPage() {
   };
 
   const handleRetry = async () => {
+    console.log('ProductsPage: User initiated retry');
     setIsRetrying(true);
     try {
       await refetch();
+      console.log('ProductsPage: Retry completed');
+    } catch (err) {
+      console.error('ProductsPage: Retry failed', err);
     } finally {
       setIsRetrying(false);
     }
@@ -53,13 +58,37 @@ export default function ProductsPage() {
   }
 
   if (error) {
+    const errorMessage = sanitizeError(error);
+    const isConnectionError = isActorError || errorMessage.toLowerCase().includes('backend connection');
+    
+    console.error('ProductsPage: Error state', { error, isActorError, isConnectionError });
+
     return (
       <div className="container py-12">
         <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Unable to Load Products</AlertTitle>
+          {isConnectionError ? (
+            <WifiOff className="h-4 w-4" />
+          ) : (
+            <AlertCircle className="h-4 w-4" />
+          )}
+          <AlertTitle>
+            {isConnectionError ? 'Unable to Connect to Backend' : 'Unable to Load Products'}
+          </AlertTitle>
           <AlertDescription className="mt-2 space-y-3">
-            <p>We couldn't load the product catalog. This might be a temporary connection issue.</p>
+            {isConnectionError ? (
+              <p>
+                We couldn't establish a connection to the backend service. Please check your internet connection and try again.
+              </p>
+            ) : (
+              <p>
+                We couldn't load the product catalog. This might be a temporary issue.
+              </p>
+            )}
+            <div className="mt-2 p-3 bg-destructive/10 rounded-md">
+              <p className="text-sm font-mono break-words">
+                {errorMessage}
+              </p>
+            </div>
             <Button 
               variant="outline" 
               size="sm" 

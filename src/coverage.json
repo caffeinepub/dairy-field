@@ -1,60 +1,62 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-15T15:57:17.484Z",
+  "generatedAt": "2026-02-15T18:50:31.242Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
     "total": 3,
-    "implemented": 3,
+    "implemented": 2,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Update the payment configuration so the app offers only one online payment option: Google Pay to phone number 9494237076 (remove the UPI ID option entirely and make Google Pay the default).",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/config/payment.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/config/payment.ts"
-        ]
+        "summary": "Fix the backend public product listing so it reliably returns products without trapping and in a deterministic order.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "Simplify the checkout payment UI to a Google Pay-only flow that is easy for customers: remove the 'Pay To' dropdown, prominently show the Google Pay number (9494237076), provide one-tap copy actions, and avoid any UPI-ID-specific validation/error messaging.",
+        "summary": "Improve the Products page error handling so users can recover when product loading fails, and the UI exposes actionable error details in English for troubleshooting.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/CheckoutPage.tsx"
+          "frontend/src/pages/ProductsPage.tsx",
+          "frontend/src/utils/errorDisplay.ts",
+          "frontend/src/hooks/useQueries.ts"
         ],
         "matchedFiles": [
-          "frontend/src/pages/CheckoutPage.tsx"
+          "frontend/src/pages/ProductsPage.tsx",
+          "frontend/src/utils/errorDisplay.ts",
+          "frontend/src/hooks/useQueries.ts"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Ensure order records continue to store and display structured payment details for the Google Pay phone option (method, payee label/value, optional transaction reference) on the Order Confirmation and Order Details views.",
+        "summary": "Add lightweight diagnostics around product loading to help identify whether failures come from actor initialization or the `listProducts()` call.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/CheckoutPage.tsx",
-          "frontend/src/utils/payment.ts"
+          "frontend/src/hooks/useActor.ts",
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/pages/ProductsPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/pages/CheckoutPage.tsx",
-          "frontend/src/utils/payment.ts"
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/pages/ProductsPage.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
+    "backend/main.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/config/payment.ts",
-    "frontend/src/pages/CheckoutPage.tsx",
-    "frontend/src/utils/payment.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/pages/ProductsPage.tsx",
+    "frontend/src/utils/errorDisplay.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

@@ -53,46 +53,55 @@ export function validatePayee(payee: PayeeOption): PayeeValidationResult {
 }
 
 /**
- * Builds a UPI payment deep link for online payment
- * @param payeeId - Selected payee ID
+ * Builds a Google Pay UPI deep link for payment
+ * @param payee - The payee option (phone or UPI)
  * @param amount - Payment amount in rupees
- * @returns UPI intent URL or error result
+ * @param payeeName - Name of the payee
+ * @returns Google Pay intent URL or error result
  */
-export function buildUpiDeepLink(
-  payeeId: string,
-  amount: number
+export function buildGooglePayDeepLink(
+  payee: PayeeOption,
+  amount: number,
+  payeeName: string
 ): { url?: string; error?: string } {
-  const { payeeName } = PAYMENT_CONFIG;
-  
-  const selectedPayee = PAYMENT_CONFIG.payees.find(p => p.id === payeeId);
-  
-  if (!selectedPayee || !payeeName) {
-    return { error: 'Payment configuration is incomplete. Please contact support.' };
-  }
-
-  // Only allow UPI type payees for UPI deep links
-  if (selectedPayee.type !== 'upi') {
-    return { error: 'Please select the UPI ID option to pay via UPI app. Phone numbers cannot be used for UPI payment links.' };
-  }
-
-  // Validate the payee before building the link
-  const validation = validatePayee(selectedPayee);
+  // Validate payee
+  const validation = validatePayee(payee);
   if (!validation.valid) {
-    return { error: validation.error };
+    return { error: validation.error || 'Invalid payee configuration. Please contact support.' };
   }
 
-  // Use the UPI ID directly as the payee address
-  const payeeAddress = selectedPayee.value;
+  // Check if we're in a browser environment that supports deep links
+  if (typeof window === 'undefined') {
+    return { error: 'Payment links are not available in this environment.' };
+  }
 
+  let upiAddress: string;
+
+  if (payee.type === 'upi') {
+    // Use UPI ID directly
+    upiAddress = payee.value;
+  } else if (payee.type === 'phone') {
+    // Phone number - append @paytm for Google Pay
+    const phoneRegex = /^\d{10,15}$/;
+    if (!phoneRegex.test(payee.value)) {
+      return { error: 'Invalid phone number format. Please contact support.' };
+    }
+    upiAddress = `${payee.value}@paytm`;
+  } else {
+    return { error: 'Unsupported payee type. Please contact support.' };
+  }
+
+  // Build Google Pay UPI deep link
+  // Format: gpay://upi/pay?pa=<upi_address>&pn=<name>&am=<amount>&cu=INR
   const params = new URLSearchParams({
-    pa: payeeAddress, // Payee address (UPI ID)
-    pn: payeeName, // Payee name
-    am: amount.toString(), // Amount
-    cu: 'INR', // Currency
-    tn: 'DAIRY FIELD Order', // Transaction note
+    pa: upiAddress,
+    pn: payeeName,
+    am: amount.toString(),
+    cu: 'INR',
+    tn: 'DAIRY FIELD Order',
   });
 
-  return { url: `upi://pay?${params.toString()}` };
+  return { url: `gpay://upi/pay?${params.toString()}` };
 }
 
 /**
@@ -112,7 +121,7 @@ export function formatPaymentInfoForNotes(
   const selectedPayee = PAYMENT_CONFIG.payees.find(p => p.id === effectivePayeeId);
 
   let structuredInfo = `[PAYMENT_INFO]
-Method: Online Payment`;
+Method: Google Pay`;
 
   if (selectedPayee) {
     structuredInfo += `
@@ -173,4 +182,17 @@ export function parsePaymentInfo(notes?: string): PaymentInfo | null {
   }
 
   return info.method ? info : null;
+}
+
+/**
+ * Extracts user notes by removing the payment info block
+ * @param notes - Full order notes including payment info
+ * @returns User notes without payment info block
+ */
+export function extractUserNotes(notes?: string): string {
+  if (!notes) return '';
+  
+  // Remove the payment info block and return the rest
+  const cleaned = notes.replace(/\[PAYMENT_INFO\][\s\S]*?\[\/PAYMENT_INFO\]/g, '').trim();
+  return cleaned;
 }

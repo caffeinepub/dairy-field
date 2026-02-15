@@ -1,16 +1,26 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-15T15:57:17.481Z",
-  "summary": "Diff implements Google Pay-only payee configuration (phone 9494237076) and appears to update Checkout to a copy-friendly Google Pay flow, while retaining UPI deep-link utilities (likely unused). No clear evidence in the provided diff summary shows missing requested behavior, but some Acceptance Criteria cannot be fully verified due to truncation and lack of explicit diffs for OrderConfirmation/OrderDetails pages.",
-  "missing_requirements": [],
+  "generatedAt": "2026-02-15T18:50:31.239Z",
+  "summary": "Frontend changes add sanitized error display, retry UX, and prefixed console diagnostics for product loading, including differentiation between backend connection (actor) issues and listProducts() failures. Backend changes cannot be verified from the truncated diff summary for deterministic, trap-free, reliably non-empty product listing behavior.",
+  "missing_requirements": [
+    {
+      "id": "REQ-1",
+      "requirement": "Fix the backend public product listing so it reliably returns products without trapping and in a deterministic order.",
+      "reason": "The diff summary for backend/main.mo is truncated and does not include any evidence of a public listProducts() implementation/change (e.g., sorting by name, trap-proof handling for empty state). Without seeing listProducts() code, the requirement cannot be confirmed as implemented.",
+      "evidence": [
+        "backend/main.mo (truncated; no listProducts() shown)"
+      ]
+    }
+  ],
   "hallucinated_features": [],
   "confidence": 0.62,
   "changed_files": [
+    "backend/main.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/config/payment.ts",
-    "frontend/src/pages/CheckoutPage.tsx",
-    "frontend/src/utils/payment.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/pages/ProductsPage.tsx",
+    "frontend/src/utils/errorDisplay.ts",
     "project_state.json"
   ]
 }

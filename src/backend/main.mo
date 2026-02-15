@@ -5,11 +5,12 @@ import Runtime "mo:core/Runtime";
 import Array "mo:core/Array";
 import Order "mo:core/Order";
 import Principal "mo:core/Principal";
+import Nat "mo:core/Nat";
+import Iter "mo:core/Iter";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 
 actor {
-  // Initialize the user system state
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
 
@@ -43,11 +44,6 @@ actor {
     userProfiles.add(caller, profile);
   };
 
-  // Function to check if the caller is an admin
-  public query ({ caller }) func isAdmin() : async Bool {
-    AccessControl.isAdmin(accessControlState, caller);
-  };
-
   // Product and Order Types
   type Product = {
     name : Text;
@@ -78,6 +74,18 @@ actor {
     public func compare(product1 : Product, product2 : Product) : Order.Order {
       Text.compare(product1.name, product2.name);
     };
+  };
+
+  type OrderResponse = {
+    id : Nat;
+    customerName : Text;
+    phoneNumber : Text;
+    address : Text;
+    notes : ?Text;
+    items : [CartItem];
+    totalAmount : Nat;
+    timestamp : Int;
+    createdBy : Principal;
   };
 
   let orders = Map.empty<Nat, Order>();
@@ -214,31 +222,94 @@ actor {
 
   var products = Map.fromIter<Text, Product>(productDefaults.map(func(p) { (p.name, p) }).values());
 
-  // Admin-only function - only admins can update product prices
-  public shared ({ caller }) func updateProductPrice(productName : Text, newPrice : Nat) : async () {
+  // ADMIN FUNCTIONS // =============================
+  func checkAdminPermission(caller : Principal) {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
-      Runtime.trap("Unauthorized: Only admins can update product prices");
+      Runtime.trap("Unauthorized: Only admins can perform this action");
+    };
+  };
+
+  func isValidProduct(product : Product) : Bool {
+    product.name.size() > 0 and product.category.size() > 0 and product.price > 0 and product.unit.size() > 0
+  };
+
+  func validateProduct(product : Product) {
+    let name = product.name;
+    if (name.size() == 0) {
+      Runtime.trap("Product name cannot be empty");
     };
 
-    switch (products.get(productName)) {
-      case (null) { Runtime.trap("Product not found") };
-      case (?product) {
-        let updatedProduct = { product with price = newPrice };
-        products.add(productName, updatedProduct);
+    let category = product.category;
+    if (category.size() == 0) {
+      Runtime.trap("Product category cannot be empty");
+    };
+
+    if (product.price <= 0) {
+      Runtime.trap("Product price must be greater than 0");
+    };
+
+    let unit = product.unit;
+    if (unit.size() == 0) {
+      Runtime.trap("Product unit cannot be empty");
+    };
+
+    switch (products.get(name)) {
+      case (null) {};
+      case (?_) {
+        Runtime.trap("A product with this name already exists");
       };
     };
+
+    if (not isValidProduct(product)) {
+      Runtime.trap("Product validation failed - unknown reason");
+    };
   };
 
-  // Query function - anyone can list products (catalog browsing)
-  public query ({ caller }) func listProducts() : async [Product] {
-    let sorted = products.toArray().map(func((k, v)) { v }).sort();
-    sorted;
+  func validateProducts(products : [Product]) {
+    let invalidProducts = products.filter(func(product) { not isValidProduct(product) });
+    if (invalidProducts.size() > 0) {
+      validateProduct(invalidProducts[0]);
+    };
   };
 
-  // Admin-only function - batch update product prices
+  func validateProductName(name : Text) : Text {
+    if (name.size() == 0) { Runtime.trap("Product name cannot be empty") };
+    name.toLower();
+  };
+
+  // Create Product (Admin) ----------------------------------
+  public shared ({ caller }) func createProduct(product : Product) : async () {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized: Only admins can perform this action");
+    };
+    validateProduct(product);
+    products.add(product.name, product);
+  };
+
+  // Bulk fetch products (Admin) --------------------------------
+  public query ({ caller }) func getProductsAdmin() : async [Product] {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized: Only admins can perform this action");
+    };
+    products.values().toArray();
+  };
+
+  // Bulk upsert products (Admin) ------------------------------
+  public shared ({ caller }) func upsertProductsAdmin(productsArray : [Product]) : async () {
+    if (not (AccessControl.isAdmin(accessControlState, caller))) {
+      Runtime.trap("Unauthorized: Only admins can perform this action");
+    };
+    validateProducts(productsArray);
+
+    for (product in productsArray.values()) {
+      products.add(product.name, product);
+    };
+  };
+
+  // Batch update product prices (Admin) ---------------------------
   public shared ({ caller }) func updateProductPrices(priceUpdates : [(Text, Nat)]) : async () {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
-      Runtime.trap("Unauthorized: Only admins can update product prices");
+      Runtime.trap("Unauthorized: Only admins can perform this action");
     };
 
     for ((productName, newPrice) in priceUpdates.values()) {
@@ -252,18 +323,31 @@ actor {
     };
   };
 
+  // END ADMIN FUNCTIONS // =============================
+
+  // Calculate total price of cart items
   func calculateTotal(items : [CartItem]) : Nat {
     var total = 0;
     for (item in items.values()) {
       switch (products.get(item.productName)) {
-        case (null) { Runtime.trap("Product not found") };
+        case (null) { Runtime.trap("Product `" # item.productName # "` not found") };
         case (?product) { total += product.price * item.quantity };
       };
     };
     total;
   };
 
-  // New function to allow guest orders (no authentication required)
+  // GUEST / USER FUNCTIONS // =============================
+  public query ({ caller = _caller }) func listProducts() : async [Product] {
+    // No authorization needed - public product listing
+    if (products.size() == 0) {
+      return [];
+    };
+    let sorted = products.values().toArray().sort();
+    sorted;
+  };
+
+  // Create Guest Order
   public shared ({ caller }) func createGuestOrder(
     customerName : Text,
     phoneNumber : Text,
@@ -271,6 +355,7 @@ actor {
     notes : ?Text,
     items : [CartItem],
   ) : async Nat {
+    // No authorization check needed - guests can create orders
     let totalAmount = calculateTotal(items);
     let order : Order = {
       id = nextOrderId;
@@ -289,7 +374,7 @@ actor {
     orderId;
   };
 
-  // User-only function - authenticated users can create orders with authentication
+  // Create Authenticated Order (User)
   public shared ({ caller }) func createOrder(
     customerName : Text,
     phoneNumber : Text,
@@ -319,17 +404,39 @@ actor {
     orderId;
   };
 
-  // Restricted function - only order creator or admin can view
+  // Get Specific Order (restricted) - only order creator or admin can view
   public query ({ caller }) func getOrder(orderId : Nat) : async Order {
     switch (orders.get(orderId)) {
       case (null) { Runtime.trap("Order not found") };
       case (?order) {
-        // Allow order creator or admin to view
         if (caller != order.createdBy and not AccessControl.isAdmin(accessControlState, caller)) {
           Runtime.trap("Unauthorized: Can only view your own orders");
         };
         order;
       };
     };
+  };
+
+  // Public method to get order by ID - allows order creator or admin to view
+  public query ({ caller }) func getOrderById(orderId : Nat) : async ?OrderResponse {
+    switch (orders.get(orderId)) {
+      case (null) { null };
+      case (?order) {
+        // Allow access if: caller created the order OR caller is admin
+        if (caller == order.createdBy or AccessControl.isAdmin(accessControlState, caller)) {
+          ?order;
+        } else {
+          Runtime.trap("Unauthorized: Can only view your own orders");
+        };
+      };
+    };
+  };
+
+  // Get All Orders (Admin only)
+  public query ({ caller }) func getAllOrders() : async [Order] {
+    if (not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Only admins can view all orders");
+    };
+    orders.values().toArray();
   };
 };

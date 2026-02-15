@@ -1,218 +1,294 @@
-import { useParams } from '@tanstack/react-router';
-import { useGetOrder } from '@/hooks/useQueries';
-import { generateRapidoPickupNote } from '@/utils/rapidoPickupNote';
-import { parsePaymentInfo } from '@/utils/payment';
-import PaymentDetailsSection from '@/components/PaymentDetailsSection';
+import { useParams, useNavigate } from '@tanstack/react-router';
+import { useGetOrderById } from '@/hooks/useQueries';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Skeleton } from '@/components/ui/skeleton';
-import { CheckCircle2, Phone, AlertCircle, Bike, Copy, ExternalLink } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { CheckCircle2, Loader2, AlertCircle, Package, User, Phone, MapPin, FileText, Copy, Check } from 'lucide-react';
+import { parsePaymentInfo, extractUserNotes } from '@/utils/payment';
+import { generateRapidoPickupNote } from '@/utils/rapidoPickupNote';
+import PaymentDetailsSection from '@/components/PaymentDetailsSection';
 import { toast } from 'sonner';
+import { useState } from 'react';
 
 export default function OrderConfirmationPage() {
-  const { orderId } = useParams({ strict: false });
-  const orderIdNum = orderId ? BigInt(orderId) : BigInt(0);
-  const { data: order, isLoading, error } = useGetOrder(orderIdNum);
-
-  const formatTimestamp = (timestamp: bigint) => {
-    const date = new Date(Number(timestamp) / 1_000_000); // Convert nanoseconds to milliseconds
-    return date.toLocaleString('en-IN', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    });
-  };
-
-  const handleCopyPickupNote = () => {
-    if (!order) return;
-    
-    const pickupNote = generateRapidoPickupNote(order);
-    navigator.clipboard.writeText(pickupNote).then(() => {
-      toast.success('Pickup details copied to clipboard!');
-    }).catch(() => {
-      toast.error('Failed to copy. Please try again.');
-    });
-  };
-
-  const handleBookRapido = () => {
-    window.open('https://rapido.bike/', '_blank', 'noopener,noreferrer');
-  };
+  const { orderId } = useParams({ from: '/confirmation/$orderId' });
+  const navigate = useNavigate();
+  
+  // Convert string orderId to bigint, or null if invalid
+  const orderIdBigInt = orderId && !isNaN(Number(orderId)) ? BigInt(orderId) : null;
+  
+  const { data: order, isLoading, isError, error } = useGetOrderById(orderIdBigInt);
+  const [copiedRapido, setCopiedRapido] = useState(false);
+  const [copiedOrderId, setCopiedOrderId] = useState(false);
 
   if (isLoading) {
     return (
-      <div className="container py-12">
-        <Card className="max-w-2xl mx-auto">
-          <CardHeader>
-            <Skeleton className="h-8 w-3/4" />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-2/3" />
-            <Skeleton className="h-32 w-full" />
-          </CardContent>
-        </Card>
+      <div className="container py-12 flex justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  if (error || !order) {
+  // Handle invalid order ID format
+  if (!orderIdBigInt) {
     return (
       <div className="container py-12">
-        <Alert variant="destructive" className="max-w-2xl mx-auto">
+        <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Unable to load order details. Please contact us at{' '}
-            <a href="tel:9494237076" className="font-semibold underline">
-              9494237076
-            </a>
-            {orderId && ` with order ID #${orderId}`} for assistance.
+            Invalid order ID format. Please check the URL and try again.
           </AlertDescription>
         </Alert>
+        <div className="mt-4 text-center">
+          <Button onClick={() => navigate({ to: '/' })}>
+            Go to Home
+          </Button>
+        </div>
       </div>
     );
   }
 
-  const paymentInfo = parsePaymentInfo(order.notes);
-  const showPaymentDetails = paymentInfo && paymentInfo.method === 'Online Payment';
+  // Handle order not found (null response)
+  if (order === null) {
+    return (
+      <div className="container py-12">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Order not found. You may not have permission to view this order.
+          </AlertDescription>
+        </Alert>
+        <div className="mt-4 text-center">
+          <Button onClick={() => navigate({ to: '/' })}>
+            Go to Home
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
-  // Extract user notes (everything before payment info block)
-  const userNotes = order.notes?.split('[PAYMENT_INFO]')[0].trim();
+  // Handle fetch errors
+  if (isError) {
+    return (
+      <div className="container py-12">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Failed to load order details: {error?.message || 'Unknown error'}
+          </AlertDescription>
+        </Alert>
+        <div className="mt-4 text-center">
+          <Button onClick={() => navigate({ to: '/' })}>
+            Go to Home
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle undefined order (shouldn't happen but TypeScript needs this)
+  if (!order) {
+    return (
+      <div className="container py-12">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Unable to load order details. Please try again.
+          </AlertDescription>
+        </Alert>
+        <div className="mt-4 text-center">
+          <Button onClick={() => navigate({ to: '/' })}>
+            Go to Home
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // At this point, order is guaranteed to be defined (not null, not undefined)
+  const paymentInfo = parsePaymentInfo(order.notes || undefined);
+  const userNotes = extractUserNotes(order.notes || undefined);
+  const rapidoNote = generateRapidoPickupNote(order);
+
+  const handleCopyRapidoNote = async () => {
+    try {
+      await navigator.clipboard.writeText(rapidoNote);
+      setCopiedRapido(true);
+      toast.success('Rapido pickup note copied!');
+      setTimeout(() => setCopiedRapido(false), 2000);
+    } catch (error) {
+      toast.error('Failed to copy. Please try again.');
+    }
+  };
+
+  const handleCopyOrderId = async () => {
+    try {
+      await navigator.clipboard.writeText(order.id.toString());
+      setCopiedOrderId(true);
+      toast.success('Order ID copied!');
+      setTimeout(() => setCopiedOrderId(false), 2000);
+    } catch (error) {
+      toast.error('Failed to copy. Please try again.');
+    }
+  };
 
   return (
     <div className="container py-12">
-      <div className="max-w-2xl mx-auto space-y-6">
-        {/* Success Header */}
-        <Card className="text-center border-primary">
-          <CardContent className="pt-12 pb-8 space-y-4">
-            <div className="w-20 h-20 rounded-full bg-primary/10 mx-auto flex items-center justify-center">
-              <CheckCircle2 className="h-10 w-10 text-primary" />
-            </div>
-            <h1 className="text-3xl font-bold">Order Confirmed!</h1>
+      <div className="max-w-3xl mx-auto space-y-6">
+        <Card className="border-green-200 bg-green-50/50">
+          <CardHeader className="text-center">
+            <CheckCircle2 className="h-16 w-16 text-green-600 mx-auto mb-4" />
+            <CardTitle className="text-2xl">Order Confirmed!</CardTitle>
             <p className="text-muted-foreground">
-              Thank you for your order. We'll deliver your fresh dairy products soon.
+              Thank you for your order. We'll prepare it for delivery.
             </p>
-            <div className="inline-block bg-muted px-6 py-3 rounded-lg">
-              <p className="text-sm text-muted-foreground mb-1">Order ID</p>
-              <p className="text-2xl font-bold">#{Number(order.id)}</p>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center space-y-3">
+              <p className="text-sm text-muted-foreground">Order ID</p>
+              <div className="flex items-center justify-center gap-2">
+                <p className="text-2xl font-bold">#{order.id.toString()}</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCopyOrderId}
+                  className="h-8 w-8 p-0"
+                >
+                  {copiedOrderId ? (
+                    <Check className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Save this order ID for tracking your order
+              </p>
             </div>
           </CardContent>
         </Card>
 
-        {/* Payment Details Section */}
-        {showPaymentDetails && paymentInfo && (
+        {paymentInfo && (paymentInfo.method === 'Google Pay' || paymentInfo.method === 'Online Payment') && (
           <PaymentDetailsSection paymentInfo={paymentInfo} />
         )}
 
-        {/* Full Order Details */}
         <Card>
           <CardHeader>
-            <CardTitle>Order Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-muted-foreground mb-1">Customer Name</p>
-                <p className="font-medium">{order.customerName}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground mb-1">Phone Number</p>
-                <p className="font-medium">{order.phoneNumber}</p>
-              </div>
-            </div>
-            
-            <div>
-              <p className="text-muted-foreground text-sm mb-1">Delivery Address</p>
-              <p className="font-medium">{order.address}</p>
-            </div>
-
-            <div>
-              <p className="text-muted-foreground text-sm mb-1">Order Date</p>
-              <p className="font-medium">{formatTimestamp(order.timestamp)}</p>
-            </div>
-            
-            {userNotes && (
-              <div>
-                <p className="text-muted-foreground text-sm mb-1">Order Notes</p>
-                <p className="font-medium whitespace-pre-wrap">{userNotes}</p>
-              </div>
-            )}
-            
-            <Separator />
-            
-            <div>
-              <p className="font-semibold mb-3">Items Ordered</p>
-              <div className="space-y-2">
-                {order.items.map((item, index) => (
-                  <div key={index} className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">
-                      {item.productName} × {Number(item.quantity)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            <Separator />
-            
-            <div className="flex justify-between text-lg font-semibold">
-              <span>Total Amount</span>
-              <span>₹{Number(order.totalAmount)}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Rapido Pickup Helper */}
-        <Card className="border-accent">
-          <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Bike className="h-5 w-5" />
-              Need Pickup Service?
+              <User className="h-5 w-5" />
+              Customer Information
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Book a Rapido delivery partner to collect your order quickly and conveniently.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button
-                onClick={handleBookRapido}
-                className="flex-1 gap-2"
-                variant="default"
-              >
-                <ExternalLink className="h-4 w-4" />
-                Book Rapido Pickup
-              </Button>
-              
-              <Button
-                onClick={handleCopyPickupNote}
-                variant="outline"
-                className="flex-1 gap-2"
-              >
-                <Copy className="h-4 w-4" />
-                Copy Pickup Details
-              </Button>
+          <CardContent className="space-y-3">
+            <div>
+              <p className="text-sm text-muted-foreground">Name</p>
+              <p className="font-medium">{order.customerName}</p>
             </div>
-
-            <Alert>
-              <AlertDescription className="text-xs">
-                Click "Copy Pickup Details" to copy order information, then paste it when booking your Rapido ride.
-              </AlertDescription>
-            </Alert>
+            <Separator />
+            <div>
+              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                <Phone className="h-4 w-4" />
+                Phone Number
+              </p>
+              <p className="font-medium">{order.phoneNumber}</p>
+            </div>
+            <Separator />
+            <div>
+              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                Delivery Address
+              </p>
+              <p className="font-medium">{order.address}</p>
+            </div>
+            {userNotes && (
+              <>
+                <Separator />
+                <div>
+                  <p className="text-sm text-muted-foreground flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Order Notes
+                  </p>
+                  <p className="font-medium whitespace-pre-wrap">{userNotes}</p>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
-        {/* Contact Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Order Items
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {order.items.map((item, index) => (
+                <div key={index} className="flex justify-between">
+                  <span>
+                    {item.productName} × {item.quantity.toString()}
+                  </span>
+                </div>
+              ))}
+              <Separator />
+              <div className="flex justify-between text-lg font-bold">
+                <span>Total Amount</span>
+                <span>₹{Number(order.totalAmount)}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-blue-200 bg-blue-50/50">
+          <CardHeader>
+            <CardTitle className="text-lg">Rapido Pickup Helper</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Copy this note to quickly book a Rapido pickup for this order:
+            </p>
+            <div className="bg-white p-4 rounded-lg border">
+              <pre className="text-sm whitespace-pre-wrap font-mono">{rapidoNote}</pre>
+            </div>
+            <Button
+              onClick={handleCopyRapidoNote}
+              variant="outline"
+              className="w-full"
+            >
+              {copiedRapido ? (
+                <>
+                  <Check className="h-4 w-4 mr-2 text-green-600" />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy Rapido Note
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+
         <Alert>
-          <Phone className="h-4 w-4" />
           <AlertDescription>
-            For any questions about your order, please call us at{' '}
-            <a href="tel:9494237076" className="font-semibold hover:text-primary transition-colors">
-              9494237076
-            </a>
+            <p className="font-medium mb-2">Need help?</p>
+            <p className="text-sm">
+              Contact us at <a href="tel:9494237076" className="font-medium underline">9494237076</a> for any questions about your order.
+            </p>
           </AlertDescription>
         </Alert>
+
+        <div className="flex gap-4">
+          <Button onClick={() => navigate({ to: '/' })} variant="outline" className="flex-1">
+            Back to Home
+          </Button>
+          <Button onClick={() => navigate({ to: '/products' })} className="flex-1">
+            Continue Shopping
+          </Button>
+        </div>
       </div>
     </div>
   );

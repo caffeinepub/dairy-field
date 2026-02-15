@@ -2,29 +2,12 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-update-the-payment-configuration-so-the-app-offers-only-one-online-payment-option-google-pay-to-phone-number-9494237076-remove-the-upi-id-option-entirely-and-make-google-pay-the-default",
-      "featureTitle": "Update the payment configuration so the app offers only one online payment option: Google Pay to phone number 9494237076 (remove the UPI ID option entirely and make Google Pay the default).",
+      "featureId": "feature-improve-the-products-page-error-handling-so-users-can-recover-when-product-loading-fails-and-the-ui-exposes-actionable-error-details-in-english-for-troubleshooting",
+      "featureTitle": "Improve the Products page error handling so users can recover when product loading fails, and the UI exposes actionable error details in English for troubleshooting.",
       "files": [
-        "frontend/src/config/payment.ts"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "authorization@4.0.0"
-      ],
-      "testIds": [
-        "REQ-1"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-simplify-the-checkout-payment-ui-to-a-google-pay-only-flow-that-is-easy-for-customers-remove-the-pay-to-dropdown-prominently-show-the-google-pay-number-9494237076-provide-one-tap-copy-actions-and-avoid-any-upi-id-specific-validation-error-messaging",
-      "featureTitle": "Simplify the checkout payment UI to a Google Pay-only flow that is easy for customers: remove the 'Pay To' dropdown, prominently show the Google Pay number (9494237076), provide one-tap copy actions, and avoid any UPI-ID-specific validation/error messaging.",
-      "files": [
-        "frontend/src/pages/CheckoutPage.tsx"
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/pages/ProductsPage.tsx",
+        "frontend/src/utils/errorDisplay.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -40,11 +23,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-ensure-order-records-continue-to-store-and-display-structured-payment-details-for-the-google-pay-phone-option-method-payee-label-value-optional-transaction-reference-on-the-order-confirmation-and-order-details-views",
-      "featureTitle": "Ensure order records continue to store and display structured payment details for the Google Pay phone option (method, payee label/value, optional transaction reference) on the Order Confirmation and Order Details views.",
+      "featureId": "feature-add-lightweight-diagnostics-around-product-loading-to-help-identify-whether-failures-come-from-actor-initialization-or-the-listproducts-call",
+      "featureTitle": "Add lightweight diagnostics around product loading to help identify whether failures come from actor initialization or the `listProducts()` call.",
       "files": [
-        "frontend/src/pages/CheckoutPage.tsx",
-        "frontend/src/utils/payment.ts"
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/pages/ProductsPage.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",

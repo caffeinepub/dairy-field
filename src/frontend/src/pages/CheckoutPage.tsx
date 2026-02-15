@@ -10,9 +10,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, AlertCircle, ShoppingBag, CreditCard, Copy, Check } from 'lucide-react';
+import { SiGooglepay } from 'react-icons/si';
 import { calculateCartWithLatestPrices } from '@/utils/cartPricing';
-import { PAYMENT_CONFIG, getDefaultPayee } from '@/config/payment';
-import { formatPaymentInfoForNotes } from '@/utils/payment';
+import { PAYMENT_CONFIG } from '@/config/payment';
+import { formatPaymentInfoForNotes, buildGooglePayDeepLink } from '@/utils/payment';
 import { toast } from 'sonner';
 import type { CartItem } from '../backend';
 
@@ -33,12 +34,15 @@ export default function CheckoutPage() {
   const [address, setAddress] = useState('');
   const [notes, setNotes] = useState('');
   const [transactionRef, setTransactionRef] = useState('');
+  const [copiedUpi, setCopiedUpi] = useState(false);
   const [copiedPhone, setCopiedPhone] = useState(false);
   const [copiedAmount, setCopiedAmount] = useState(false);
+  const [paymentAttempted, setPaymentAttempted] = useState(false);
 
-  // Get the default (and only) payee
-  const defaultPayeeId = getDefaultPayee() || '';
-  const payee = PAYMENT_CONFIG.payees.find(p => p.id === defaultPayeeId);
+  // Get the default payee - Google Pay UPI
+  const payee = PAYMENT_CONFIG.payees.find(p => p.id === PAYMENT_CONFIG.defaultPayeeId) || PAYMENT_CONFIG.payees[0];
+  const payeeName = PAYMENT_CONFIG.payeeName || 'ALIWARISKHAN WARSI';
+  const displayPhone = PAYMENT_CONFIG.phoneNumber || '9494237076';
 
   // Prefill form from user profile only if authenticated
   useEffect(() => {
@@ -110,13 +114,54 @@ export default function CheckoutPage() {
     );
   }
 
-  const handleCopyPhone = async () => {
+  const handlePayWithGooglePay = () => {
+    if (!payee || !payeeName) {
+      toast.error('Payment configuration is incomplete. Please contact support.');
+      return;
+    }
+
+    const deepLinkResult = buildGooglePayDeepLink(
+      payee,
+      total,
+      payeeName
+    );
+
+    if (deepLinkResult.error) {
+      toast.error(deepLinkResult.error);
+      setPaymentAttempted(true);
+      return;
+    }
+
+    if (deepLinkResult.url) {
+      // Try to open the Google Pay app
+      try {
+        window.location.href = deepLinkResult.url;
+        setPaymentAttempted(true);
+        toast.success('Opening Google Pay...');
+      } catch (error) {
+        toast.error('Unable to open Google Pay. Please use manual payment below.');
+        setPaymentAttempted(true);
+      }
+    }
+  };
+
+  const handleCopyUpi = async () => {
     if (!payee) return;
-    
     try {
       await navigator.clipboard.writeText(payee.value);
+      setCopiedUpi(true);
+      toast.success('UPI ID copied!');
+      setTimeout(() => setCopiedUpi(false), 2000);
+    } catch (error) {
+      toast.error('Failed to copy. Please try again.');
+    }
+  };
+
+  const handleCopyPhone = async () => {
+    try {
+      await navigator.clipboard.writeText(displayPhone);
       setCopiedPhone(true);
-      toast.success('Google Pay number copied!');
+      toast.success('Phone number copied!');
       setTimeout(() => setCopiedPhone(false), 2000);
     } catch (error) {
       toast.error('Failed to copy. Please try again.');
@@ -143,9 +188,12 @@ export default function CheckoutPage() {
         quantity: BigInt(item.quantity),
       }));
 
-      // Always format payment info for online payment with Google Pay
-      const paymentInfo = formatPaymentInfoForNotes('online', defaultPayeeId, transactionRef);
-      const orderNotes = paymentInfo + (notes ? `\n\n${notes}` : '');
+      // Format payment info and combine with user notes
+      const paymentInfo = formatPaymentInfoForNotes('online', payee?.id, transactionRef);
+      // User notes come first, then payment info
+      const orderNotes = notes.trim() 
+        ? `${notes.trim()}\n\n${paymentInfo}` 
+        : paymentInfo;
 
       let orderId: bigint;
 
@@ -178,9 +226,11 @@ export default function CheckoutPage() {
       }
 
       clearCart();
+      toast.success('Order placed successfully! Shop owner will be notified.');
       navigate({ to: '/confirmation/$orderId', params: { orderId: String(orderId) } });
     } catch (error) {
       console.error('Failed to create order:', error);
+      toast.error('Failed to place order. Please try again.');
     }
   };
 
@@ -192,22 +242,24 @@ export default function CheckoutPage() {
         <h1 className="text-3xl font-bold mb-8">Checkout</h1>
 
         <div className="grid md:grid-cols-2 gap-8">
-          <div>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Customer Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Customer Information</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <Label htmlFor="name">Name *</Label>
+                    <Label htmlFor="name">Full Name *</Label>
                     <Input
                       id="name"
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                       required
+                      placeholder="Enter your full name"
                     />
                   </div>
+
                   <div>
                     <Label htmlFor="phone">Phone Number *</Label>
                     <Input
@@ -216,8 +268,10 @@ export default function CheckoutPage() {
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
                       required
+                      placeholder="Enter your phone number"
                     />
                   </div>
+
                   <div>
                     <Label htmlFor="address">Delivery Address *</Label>
                     <Textarea
@@ -225,130 +279,129 @@ export default function CheckoutPage() {
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
                       required
+                      placeholder="Enter your complete delivery address"
                       rows={3}
                     />
                   </div>
+
                   <div>
                     <Label htmlFor="notes">Order Notes (Optional)</Label>
                     <Textarea
                       id="notes"
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
-                      placeholder="Any special instructions..."
+                      placeholder="Any special instructions for your order"
                       rows={2}
                     />
                   </div>
-                </CardContent>
-              </Card>
+                </form>
+              </CardContent>
+            </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CreditCard className="h-5 w-5" />
-                    Payment via Google Pay
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Alert>
-                    <AlertDescription className="text-sm">
-                      Pay using Google Pay to complete your order. Copy the details below and make the payment.
-                    </AlertDescription>
-                  </Alert>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" />
+                  Payment Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Alert className="border-primary/50 bg-primary/5">
+                  <SiGooglepay className="h-5 w-5 text-primary" />
+                  <AlertDescription>
+                    <p className="font-semibold mb-1">Google Pay Payment</p>
+                    <p className="text-sm">Pay to: <span className="font-medium">{payeeName}</span></p>
+                    {payee && payee.type === 'upi' && (
+                      <p className="text-sm">UPI ID: <span className="font-medium">{payee.value}</span></p>
+                    )}
+                    <p className="text-sm">Phone: <span className="font-medium">{displayPhone}</span></p>
+                  </AlertDescription>
+                </Alert>
 
-                  {payee && (
-                    <div className="bg-muted rounded-lg p-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-1">Pay to</p>
-                          <p className="text-lg font-semibold">{payee.label}</p>
+                <div className="space-y-3">
+                  <Button
+                    type="button"
+                    onClick={handlePayWithGooglePay}
+                    className="w-full"
+                    size="lg"
+                  >
+                    <SiGooglepay className="h-5 w-5 mr-2" />
+                    Pay with Google Pay
+                  </Button>
+
+                  {paymentAttempted && (
+                    <div className="space-y-3 pt-2 border-t">
+                      <p className="text-sm text-muted-foreground">
+                        Or copy payment details manually:
+                      </p>
+
+                      {payee && payee.type === 'upi' && (
+                        <div className="flex gap-2">
+                          <Input
+                            value={payee.value}
+                            readOnly
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={handleCopyUpi}
+                          >
+                            {copiedUpi ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                          </Button>
                         </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-between bg-background rounded-md p-3">
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-1">Phone Number</p>
-                          <p className="text-xl font-bold font-mono">{payee.value}</p>
-                        </div>
+                      )}
+
+                      <div className="flex gap-2">
+                        <Input
+                          value={displayPhone}
+                          readOnly
+                          className="flex-1"
+                        />
                         <Button
                           type="button"
                           variant="outline"
-                          size="sm"
+                          size="icon"
                           onClick={handleCopyPhone}
-                          className="gap-2"
                         >
-                          {copiedPhone ? (
-                            <>
-                              <Check className="h-4 w-4" />
-                              Copied
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="h-4 w-4" />
-                              Copy
-                            </>
-                          )}
+                          {copiedPhone ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                         </Button>
                       </div>
 
-                      <div className="flex items-center justify-between bg-background rounded-md p-3">
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-1">Amount</p>
-                          <p className="text-xl font-bold text-primary">₹{total}</p>
-                        </div>
+                      <div className="flex gap-2">
+                        <Input
+                          value={`₹${total}`}
+                          readOnly
+                          className="flex-1"
+                        />
                         <Button
                           type="button"
                           variant="outline"
-                          size="sm"
+                          size="icon"
                           onClick={handleCopyAmount}
-                          className="gap-2"
                         >
-                          {copiedAmount ? (
-                            <>
-                              <Check className="h-4 w-4" />
-                              Copied
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="h-4 w-4" />
-                              Copy
-                            </>
-                          )}
+                          {copiedAmount ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                         </Button>
                       </div>
                     </div>
                   )}
+                </div>
 
-                  <div>
-                    <Label htmlFor="transactionRef">Transaction Reference (Optional)</Label>
-                    <Input
-                      id="transactionRef"
-                      value={transactionRef}
-                      onChange={(e) => setTransactionRef(e.target.value)}
-                      placeholder="Enter transaction ID after payment (optional)"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      You can leave this empty and share it with us later if needed.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Button
-                type="submit"
-                className="w-full"
-                size="lg"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Placing Order...
-                  </>
-                ) : (
-                  'Place Order'
-                )}
-              </Button>
-            </form>
+                <div>
+                  <Label htmlFor="transactionRef">Transaction Reference (Optional)</Label>
+                  <Input
+                    id="transactionRef"
+                    value={transactionRef}
+                    onChange={(e) => setTransactionRef(e.target.value)}
+                    placeholder="Enter UPI transaction ID after payment"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Add your transaction ID for faster order confirmation
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           <div>
@@ -363,16 +416,38 @@ export default function CheckoutPage() {
                       <span>
                         {item.productName} × {item.quantity}
                       </span>
-                      <span>₹{Number(item.price) * item.quantity}</span>
+                      <span className="font-medium">₹{item.lineTotal}</span>
                     </div>
                   ))}
                 </div>
+
                 <div className="border-t pt-4">
-                  <div className="flex justify-between font-bold text-lg">
+                  <div className="flex justify-between text-lg font-bold">
                     <span>Total</span>
                     <span>₹{total}</span>
                   </div>
                 </div>
+
+                <Button
+                  type="submit"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="w-full"
+                  size="lg"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Placing Order...
+                    </>
+                  ) : (
+                    'Place Order'
+                  )}
+                </Button>
+
+                <p className="text-xs text-muted-foreground text-center">
+                  By placing this order, you agree to our terms and conditions
+                </p>
               </CardContent>
             </Card>
           </div>

@@ -1,61 +1,57 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Google Pay-only checkout payment to 9494237076 (remove UPI-ID)",
+  "title": "Improve Products page resilience, error recovery, and diagnostics",
   "requirements": [
     {
-      "id": "REQ-1",
-      "summary": "Remove UPI-ID payee and make Google Pay (phone) the only/default payee in payment configuration.",
-      "acceptanceCriteria": [
-        "In frontend/src/config/payment.ts, PAYMENT_CONFIG.payees contains only one payee: id='gpay-phone', type='phone', value='9494237076'.",
-        "PAYMENT_CONFIG.defaultPayeeId is set to 'gpay-phone' (or omitted while still defaulting to 'gpay-phone').",
-        "No UPI ID payee (e.g., 'aliwaris@sbi') is present anywhere in the selectable options on the Checkout page."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/config/payment.ts",
-          "operation": "modify",
-          "description": "Update PAYMENT_CONFIG to remove the UPI-ID option entirely and keep only the Google Pay phone payee (id='gpay-phone', type='phone', value='9494237076'); set defaultPayeeId to 'gpay-phone' and ensure label clearly indicates Google Pay. Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
       "id": "REQ-2",
-      "summary": "Replace checkout payment selection with a Google Pay-only, copy-first payment UI (no payee dropdown, no UPI-ID validations).",
+      "summary": "Enhance Products page error UI to show actionable English details, support retry with in-progress state, and recover without refresh.",
       "acceptanceCriteria": [
-        "On frontend/src/pages/CheckoutPage.tsx, the payment section no longer renders a Select dropdown for payees.",
-        "The payment section displays the payee label and phone number 9494237076 in a prominent, copy-friendly format.",
-        "The payment section includes a 'Copy Google Pay Number' action that copies '9494237076' to the clipboard and provides visible confirmation (toast or inline message).",
-        "The payment section includes a 'Copy Amount' action that copies the exact total amount (e.g., '₹123' or '123') to the clipboard and provides visible confirmation.",
-        "Clicking the primary payment CTA does not call buildUpiDeepLink with a configuration that can produce the current error 'Phone numbers cannot be used for UPI payment links.'"
+        "When product loading fails, the Products page displays an English error state that includes the underlying error message (sanitized for display) in addition to the existing friendly text.",
+        "The error state includes a Retry action that triggers a refetch and visibly indicates retry-in-progress.",
+        "If the backend call succeeds after retry, the product grid renders without requiring a full page refresh."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/CheckoutPage.tsx",
+          "path": "frontend/src/pages/ProductsPage.tsx",
           "operation": "modify",
-          "description": "Refactor the payment section to a Google Pay-only flow: remove the payee Select dropdown and selectedPayee switching; prominently display 'Google Pay' and the number 9494237076; add two copy actions (copy number + copy total amount) using clipboard API with visible confirmation (use existing toast system already used elsewhere). Remove/avoid UPI-ID-specific validation/error messaging and remove the Pay Now deep-link flow so buildUpiDeepLink is not invoked from the primary CTA. Continue using existing shadcn-ui building blocks already imported (Card, Button, Alert, etc.). Verify the component's usage instructions before implementing."
+          "description": "Update the error state UI to include a sanitized underlying error message in English (in addition to the friendly text), and ensure the Retry action clearly indicates retry-in-progress and triggers a refetch that can recover the grid without full refresh. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/utils/errorDisplay.ts",
+          "operation": "create",
+          "description": "Add a small utility to sanitize/normalize unknown errors into safe English display text (e.g., handle Error/strings/objects; strip noisy prefixes). Use this from ProductsPage and product-loading hooks. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Adjust the products React Query hook to better support manual retry/refetch flows and expose enough state for the page to render retry-in-progress and recover cleanly after a successful refetch. Leverage the existing core-infrastructure actor wiring via useActor/createActorWithConfig. Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Preserve structured payment notes for Google Pay phone payee and ensure consistent rendering on order confirmation/details views (transaction reference optional).",
+      "summary": "Add lightweight diagnostics to distinguish actor initialization failures from listProducts() call failures, with clear UI messaging and prefixed console logs.",
       "acceptanceCriteria": [
-        "When an order is placed, the notes include a [PAYMENT_INFO] block produced by formatPaymentInfoForNotes with PayeeType='phone', PayeeLabel indicating Google Pay, and PayeeValue='9494237076'.",
-        "On frontend/src/pages/OrderConfirmationPage.tsx, PaymentDetailsSection renders the Google Pay label and phone number when the order contains the structured payment info.",
-        "On frontend/src/pages/OrderDetailsPage.tsx, payment details render consistently with Order Confirmation when structured payment info exists.",
-        "The transaction reference field remains optional and, when provided, is shown in PaymentDetailsSection."
+        "If actor initialization fails or is unavailable, the Products page shows a clear English message indicating the app could not connect to the backend.",
+        "Console logs include a clear prefix (e.g., `ProductsPage:` / `useProducts:`) and the caught error for both actor initialization issues and `listProducts()` failures.",
+        "No changes are made to any frontend files listed as immutable in SYSTEM_CONTEXT."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/CheckoutPage.tsx",
+          "path": "frontend/src/hooks/useActor.ts",
           "operation": "modify",
-          "description": "Ensure order creation always writes structured Google Pay phone details by calling formatPaymentInfoForNotes with the Google Pay payee id (gpay-phone) and the optional transactionRef, independent of any removed payee selection UI. Verify the component's usage instructions before implementing."
+          "description": "Expose actor initialization failure state (e.g., error/isError) to consumers and add prefixed console logging for actor creation/initialization failures (e.g., `useActor:`). Keep behavior compatible with existing core-infrastructure connection setup. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/utils/payment.ts",
+          "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Harden formatPaymentInfoForNotes so it reliably includes PayeeType/PayeeLabel/PayeeValue for the Google Pay phone payee (e.g., defaulting to the configured default payee when payeeId is missing), and keep TransactionRef optional. Verify the component's usage instructions before implementing."
+          "description": "Add prefixed console logging around the product-loading query function to distinguish between (a) actor unavailable/initialization issues and (b) listProducts() failures (e.g., `useProducts:`). Ensure the thrown errors remain suitable for sanitized display in the Products page. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/ProductsPage.tsx",
+          "operation": "modify",
+          "description": "Use the actor initialization error state (from useActor/useProducts) to render a distinct English message for backend connection failure vs product-listing failure. Add prefixed console logs for page-level catches/branches (e.g., `ProductsPage:`). Ensure no edits are made to any immutable frontend paths per SYSTEM_CONTEXT. Verify the component's usage instructions before implementing."
         }
       ]
     }

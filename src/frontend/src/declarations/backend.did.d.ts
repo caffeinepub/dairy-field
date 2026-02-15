@@ -22,6 +22,17 @@ export interface Order {
   'items' : Array<CartItem>,
   'phoneNumber' : string,
 }
+export interface OrderResponse {
+  'id' : bigint,
+  'customerName' : string,
+  'createdBy' : Principal,
+  'totalAmount' : bigint,
+  'address' : string,
+  'notes' : [] | [string],
+  'timestamp' : bigint,
+  'items' : Array<CartItem>,
+  'phoneNumber' : string,
+}
 export interface Product {
   'name' : string,
   'unit' : string,
@@ -48,16 +59,19 @@ export interface _SERVICE {
     [string, string, string, [] | [string], Array<CartItem>],
     bigint
   >,
+  'createProduct' : ActorMethod<[Product], undefined>,
+  'getAllOrders' : ActorMethod<[], Array<Order>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getOrder' : ActorMethod<[bigint], Order>,
+  'getOrderById' : ActorMethod<[bigint], [] | [OrderResponse]>,
+  'getProductsAdmin' : ActorMethod<[], Array<Product>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
-  'isAdmin' : ActorMethod<[], boolean>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'listProducts' : ActorMethod<[], Array<Product>>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
-  'updateProductPrice' : ActorMethod<[string, bigint], undefined>,
   'updateProductPrices' : ActorMethod<[Array<[string, bigint]>], undefined>,
+  'upsertProductsAdmin' : ActorMethod<[Array<Product>], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

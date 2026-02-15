@@ -1,34 +1,24 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Implement and stabilize online payments in checkout, restricting payment method to a simplified Google Pay-only option for customers.",
-  "architectural_notes": [
-    "Checkout payments should be limited to a single Google Pay (GPay) option tied to UPI number 9494237076, with a simplified customer flow."
-  ],
+  "summary": "New project",
+  "architectural_notes": [],
   "known_issues": [
-    "Online payment via UPI ID is currently not working."
+    "Products fail to load (user reports: \"UNABLE TO LOAD PRODUCTS\")."
   ],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-update-the-payment-configuration-so-the-app-offers-only-one-online-payment-option-google-pay-to-phone-number-9494237076-remove-the-upi-id-option-entirely-and-make-google-pay-the-default",
-      "title": "Update the payment configuration so the app offers only one online payment option: Google Pay to phone number 9494237076 (remove the UPI ID option entirely and make Google Pay the default).",
-      "reqIds": [
-        "REQ-1"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-simplify-the-checkout-payment-ui-to-a-google-pay-only-flow-that-is-easy-for-customers-remove-the-pay-to-dropdown-prominently-show-the-google-pay-number-9494237076-provide-one-tap-copy-actions-and-avoid-any-upi-id-specific-validation-error-messaging",
-      "title": "Simplify the checkout payment UI to a Google Pay-only flow that is easy for customers: remove the 'Pay To' dropdown, prominently show the Google Pay number (9494237076), provide one-tap copy actions, and avoid any UPI-ID-specific validation/error messaging.",
+      "id": "feature-improve-the-products-page-error-handling-so-users-can-recover-when-product-loading-fails-and-the-ui-exposes-actionable-error-details-in-english-for-troubleshooting",
+      "title": "Improve the Products page error handling so users can recover when product loading fails, and the UI exposes actionable error details in English for troubleshooting.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-ensure-order-records-continue-to-store-and-display-structured-payment-details-for-the-google-pay-phone-option-method-payee-label-value-optional-transaction-reference-on-the-order-confirmation-and-order-details-views",
-      "title": "Ensure order records continue to store and display structured payment details for the Google Pay phone option (method, payee label/value, optional transaction reference) on the Order Confirmation and Order Details views.",
+      "id": "feature-add-lightweight-diagnostics-around-product-loading-to-help-identify-whether-failures-come-from-actor-initialization-or-the-listproducts-call",
+      "title": "Add lightweight diagnostics around product loading to help identify whether failures come from actor initialization or the `listProducts()` call.",
       "reqIds": [
         "REQ-3"
       ],
@@ -38,12 +28,14 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Fix UPI payment and change checkout to offer only Google Pay (GPay) using UPI number 9494237076 with a simpler customer flow",
-      "reqIds": [],
+      "summary": "Fix the backend public product listing so it reliably returns products without trapping and in a deterministic order.",
+      "reqIds": [
+        "REQ-1"
+      ],
       "status": "pending"
     }
   ],
-  "projectName": "Replace broken UPI-ID payments with Google Pay-only payment to 9494237076",
+  "projectName": "Fix product catalog failing to load",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

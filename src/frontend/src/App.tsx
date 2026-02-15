@@ -1,5 +1,5 @@
 import { createRouter, createRoute, createRootRoute, RouterProvider, Outlet, Link } from '@tanstack/react-router';
-import { ShoppingCart, Phone, Shield, Package } from 'lucide-react';
+import { ShoppingCart, Phone, Package } from 'lucide-react';
 import HomePage from './pages/HomePage';
 import ProductsPage from './pages/ProductsPage';
 import CartPage from './pages/CartPage';
@@ -8,6 +8,11 @@ import OrderConfirmationPage from './pages/OrderConfirmationPage';
 import ContactPage from './pages/ContactPage';
 import OrderDetailsPage from './pages/OrderDetailsPage';
 import AdminRatesPage from './pages/AdminRatesPage';
+import AdminProductsPage from './pages/AdminProductsPage';
+import AdminOrdersPage from './pages/AdminOrdersPage';
+import AdminOrderDetailsPage from './pages/AdminOrderDetailsPage';
+import AdminLayout from './components/admin/AdminLayout';
+import AdminRouteGuard from './components/admin/AdminRouteGuard';
 import { CartProvider, useCart } from './state/cart/CartContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Button } from './components/ui/button';
@@ -19,7 +24,7 @@ import { SiX, SiFacebook, SiInstagram } from 'react-icons/si';
 
 const queryClient = new QueryClient();
 
-function Layout() {
+function CustomerLayout() {
   const { items } = useCart();
   const cartItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
   const { data: isAdmin, isLoading: isAdminLoading } = useIsAdmin();
@@ -42,12 +47,8 @@ function Layout() {
               <Link to="/contact" className="text-foreground/80 hover:text-foreground transition-colors font-medium">
                 Contact
               </Link>
-              <Link to="/order-details" className="text-foreground/80 hover:text-foreground transition-colors font-medium">
-                Track Order
-              </Link>
               {showAdminUI && (
-                <Link to="/admin/rates" className="text-foreground/80 hover:text-foreground transition-colors font-medium flex items-center gap-1">
-                  <Shield className="h-4 w-4" />
+                <Link to="/admin/orders" className="text-foreground/80 hover:text-foreground transition-colors font-medium">
                   Admin
                 </Link>
               )}
@@ -68,11 +69,6 @@ function Layout() {
       </header>
 
       <main className="flex-1">
-        {showAdminUI && (
-          <div className="container mx-auto px-4 pt-4">
-            <AdminOrderMessageBanner />
-          </div>
-        )}
         <Outlet />
       </main>
 
@@ -96,11 +92,6 @@ function Layout() {
                 <li>
                   <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
                     Contact Us
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/order-details" className="text-muted-foreground hover:text-foreground transition-colors">
-                    Track Order
                   </Link>
                 </li>
               </ul>
@@ -155,8 +146,20 @@ function Layout() {
   );
 }
 
+function AdminLayoutWrapper() {
+  return (
+    <AdminRouteGuard>
+      <AdminLayout>
+        <AdminOrderMessageBanner />
+        <Outlet />
+      </AdminLayout>
+      <Toaster />
+    </AdminRouteGuard>
+  );
+}
+
 const rootRoute = createRootRoute({
-  component: Layout,
+  component: CustomerLayout,
 });
 
 const indexRoute = createRoute({
@@ -198,13 +201,44 @@ const contactRoute = createRoute({
 const orderDetailsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/order-details',
-  component: OrderDetailsPage,
+  component: () => (
+    <AdminRouteGuard accessDeniedMessage="Order tracking is available for admin only.">
+      <OrderDetailsPage />
+    </AdminRouteGuard>
+  ),
+});
+
+// Admin routes under the same root but with different layout
+const adminOrdersRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/orders',
+  component: () => (
+    <AdminLayoutWrapper />
+  ),
+});
+
+const adminOrderDetailsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/orders/$orderId',
+  component: () => (
+    <AdminLayoutWrapper />
+  ),
 });
 
 const adminRatesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/admin/rates',
-  component: AdminRatesPage,
+  component: () => (
+    <AdminLayoutWrapper />
+  ),
+});
+
+const adminProductsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/products',
+  component: () => (
+    <AdminLayoutWrapper />
+  ),
 });
 
 const routeTree = rootRoute.addChildren([
@@ -215,7 +249,10 @@ const routeTree = rootRoute.addChildren([
   confirmationRoute,
   contactRoute,
   orderDetailsRoute,
+  adminOrdersRoute,
+  adminOrderDetailsRoute,
   adminRatesRoute,
+  adminProductsRoute,
 ]);
 
 const router = createRouter({ routeTree });

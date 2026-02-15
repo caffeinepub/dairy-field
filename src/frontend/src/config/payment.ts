@@ -12,21 +12,23 @@ export interface PaymentConfig {
   payees: PayeeOption[];
   defaultPayeeId?: string;
   payeeName?: string; // Merchant name
+  phoneNumber?: string; // Display phone number (for reference)
   fallbackURL?: string; // Optional fallback URL if UPI not available
 }
 
-// Configure your payment details here
+// Configure your payment details here - Google Pay with UPI ID
 export const PAYMENT_CONFIG: PaymentConfig = {
   payees: [
     {
-      id: 'gpay-phone',
-      type: 'phone',
+      id: 'gpay-upi',
+      type: 'upi',
       label: 'Google Pay',
-      value: '9494237076',
+      value: 'aliwarsi@sbi',
     },
   ],
-  defaultPayeeId: 'gpay-phone',
-  payeeName: 'DAIRY FIELD',
+  defaultPayeeId: 'gpay-upi',
+  payeeName: 'ALIWARISKHAN WARSI',
+  phoneNumber: '9494237076', // Display phone for reference
 };
 
 export function isPaymentConfigured(): boolean {
@@ -37,14 +39,5 @@ export function isPaymentConfigured(): boolean {
 }
 
 export function getDefaultPayee(): string | undefined {
-  if (!PAYMENT_CONFIG.payees.length) return undefined;
-  
-  if (PAYMENT_CONFIG.defaultPayeeId) {
-    const defaultPayee = PAYMENT_CONFIG.payees.find(
-      (p) => p.id === PAYMENT_CONFIG.defaultPayeeId
-    );
-    if (defaultPayee) return defaultPayee.id;
-  }
-  
-  return PAYMENT_CONFIG.payees[0].id;
+  return PAYMENT_CONFIG.defaultPayeeId || PAYMENT_CONFIG.payees[0]?.id;
 }

@@ -1,220 +1,225 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from '@tanstack/react-router';
-import { useGetOrder } from '@/hooks/useQueries';
-import { parsePaymentInfo } from '@/utils/payment';
-import PaymentDetailsSection from '@/components/PaymentDetailsSection';
+import { useNavigate } from '@tanstack/react-router';
+import { useGetOrderById, useIsAdmin } from '@/hooks/useQueries';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Phone, AlertCircle, Package } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Loader2, AlertCircle, Package, User, Phone, MapPin, FileText, Search, ShieldAlert } from 'lucide-react';
+import { parsePaymentInfo, extractUserNotes } from '@/utils/payment';
+import PaymentDetailsSection from '@/components/PaymentDetailsSection';
 
 export default function OrderDetailsPage() {
   const navigate = useNavigate();
-  const { orderId: routeOrderId } = useParams({ strict: false });
+  const [orderIdInput, setOrderIdInput] = useState('');
+  const [searchedOrderId, setSearchedOrderId] = useState<bigint | null>(null);
   
-  const [inputOrderId, setInputOrderId] = useState(routeOrderId || '');
-  const [validationError, setValidationError] = useState('');
-  const [submittedOrderId, setSubmittedOrderId] = useState<bigint | null>(
-    routeOrderId ? BigInt(routeOrderId) : null
-  );
+  const { data: isAdmin, isLoading: isAdminLoading } = useIsAdmin();
+  const { data: order, isLoading, isError, error } = useGetOrderById(searchedOrderId);
 
-  const shouldFetch = submittedOrderId !== null && submittedOrderId > 0n;
-  const { data: order, isLoading, error } = useGetOrder(submittedOrderId || BigInt(0));
+  // Show access denied message for non-admin users
+  if (!isAdminLoading && !isAdmin) {
+    return (
+      <div className="container py-12">
+        <Card className="max-w-md mx-auto text-center">
+          <CardHeader>
+            <ShieldAlert className="h-16 w-16 mx-auto mb-4 text-destructive" />
+            <CardTitle>Access Restricted</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert variant="destructive">
+              <AlertDescription>
+                Order tracking is available for admin only.
+              </AlertDescription>
+            </Alert>
+            <Button onClick={() => navigate({ to: '/' })} className="w-full">
+              Go to Home
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setValidationError('');
-
-    // Validate input
-    if (!inputOrderId.trim()) {
-      setValidationError('Please enter an Order ID');
+    const id = parseInt(orderIdInput, 10);
+    if (isNaN(id) || id <= 0) {
       return;
     }
-
-    const numericValue = Number(inputOrderId);
-    if (isNaN(numericValue) || !Number.isInteger(numericValue)) {
-      setValidationError('Order ID must be a valid number');
-      return;
-    }
-
-    if (numericValue <= 0) {
-      setValidationError('Order ID must be greater than 0');
-      return;
-    }
-
-    // Valid input - fetch order
-    const orderIdBigInt = BigInt(numericValue);
-    setSubmittedOrderId(orderIdBigInt);
-    
-    // Update URL to include order ID
-    navigate({ to: `/order/${numericValue}` });
+    setSearchedOrderId(BigInt(id));
   };
 
-  const formatTimestamp = (timestamp: bigint) => {
-    const date = new Date(Number(timestamp) / 1_000_000); // Convert nanoseconds to milliseconds
-    return date.toLocaleString('en-IN', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    });
-  };
-
-  const paymentInfo = order ? parsePaymentInfo(order.notes) : null;
-  const showPaymentDetails = paymentInfo && paymentInfo.method === 'Online Payment';
-  
-  // Extract user notes (everything before payment info block)
-  const userNotes = order?.notes?.split('[PAYMENT_INFO]')[0].trim();
+  const paymentInfo = order ? parsePaymentInfo(order.notes || undefined) : null;
+  const userNotes = order ? extractUserNotes(order.notes || undefined) : '';
 
   return (
     <div className="container py-12">
-      <div className="max-w-2xl mx-auto space-y-6">
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold">Order Details</h1>
+      <div className="max-w-3xl mx-auto space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Order Details</h1>
           <p className="text-muted-foreground">
-            Enter your Order ID to view your order information
+            Enter your order ID to view order details
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Search className="h-5 w-5" />
-              Lookup Order
-            </CardTitle>
+            <CardTitle>Search Order</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="orderId">Order ID</Label>
+            <form onSubmit={handleSearch} className="flex gap-2">
+              <div className="flex-1">
+                <Label htmlFor="orderId" className="sr-only">
+                  Order ID
+                </Label>
                 <Input
                   id="orderId"
-                  type="text"
-                  placeholder="Enter your order ID (e.g., 123)"
-                  value={inputOrderId}
-                  onChange={(e) => {
-                    setInputOrderId(e.target.value);
-                    setValidationError('');
-                  }}
-                  className={validationError ? 'border-destructive' : ''}
+                  type="number"
+                  placeholder="Enter order ID (e.g., 1)"
+                  value={orderIdInput}
+                  onChange={(e) => setOrderIdInput(e.target.value)}
+                  min="1"
+                  required
                 />
-                {validationError && (
-                  <p className="text-sm text-destructive">{validationError}</p>
-                )}
               </div>
-              <Button type="submit" className="w-full gap-2">
-                <Search className="h-4 w-4" />
-                View Order Details
+              <Button type="submit">
+                <Search className="h-4 w-4 mr-2" />
+                Search
               </Button>
             </form>
           </CardContent>
         </Card>
 
-        {isLoading && shouldFetch && (
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-1/3" />
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-2/3" />
-              <Skeleton className="h-32 w-full" />
-            </CardContent>
-          </Card>
+        {isLoading && (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
         )}
 
-        {error && shouldFetch && (
+        {isError && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Unable to load order details. The order may not exist or you may not have permission to view it.
-              Please contact us at{' '}
-              <a href="tel:9494237076" className="font-semibold underline">
-                9494237076
-              </a>{' '}
-              with your order ID for assistance.
+              Failed to load order: {error?.message || 'Unknown error'}
             </AlertDescription>
           </Alert>
         )}
 
-        {order && !isLoading && (
-          <>
-            {/* Payment Details Section */}
-            {showPaymentDetails && paymentInfo && (
+        {!isLoading && searchedOrderId !== null && order === null && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Order not found. Please check the order ID or you may not have permission to view this order.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {order && (
+          <div className="space-y-6">
+            <Card className="border-primary">
+              <CardHeader>
+                <CardTitle className="text-center">
+                  Order #{order.id.toString()}
+                </CardTitle>
+                <p className="text-center text-sm text-muted-foreground">
+                  Placed on {new Date(Number(order.timestamp) / 1000000).toLocaleString()}
+                </p>
+              </CardHeader>
+            </Card>
+
+            {paymentInfo && (paymentInfo.method === 'Google Pay' || paymentInfo.method === 'Online Payment') && (
               <PaymentDetailsSection paymentInfo={paymentInfo} />
             )}
 
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  Order #{Number(order.id)}
+                  <User className="h-5 w-5" />
+                  Customer Information
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground mb-1">Customer Name</p>
-                    <p className="font-medium">{order.customerName}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground mb-1">Phone Number</p>
-                    <p className="font-medium">{order.phoneNumber}</p>
-                  </div>
-                </div>
-
+              <CardContent className="space-y-3">
                 <div>
-                  <p className="text-muted-foreground text-sm mb-1">Delivery Address</p>
+                  <p className="text-sm text-muted-foreground">Name</p>
+                  <p className="font-medium">{order.customerName}</p>
+                </div>
+                <Separator />
+                <div>
+                  <p className="text-sm text-muted-foreground flex items-center gap-2">
+                    <Phone className="h-4 w-4" />
+                    Phone Number
+                  </p>
+                  <p className="font-medium">{order.phoneNumber}</p>
+                </div>
+                <Separator />
+                <div>
+                  <p className="text-sm text-muted-foreground flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    Delivery Address
+                  </p>
                   <p className="font-medium">{order.address}</p>
                 </div>
-
                 {userNotes && (
-                  <div>
-                    <p className="text-muted-foreground text-sm mb-1">Order Notes</p>
-                    <p className="font-medium whitespace-pre-wrap">{userNotes}</p>
-                  </div>
+                  <>
+                    <Separator />
+                    <div>
+                      <p className="text-sm text-muted-foreground flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        Order Notes
+                      </p>
+                      <p className="font-medium whitespace-pre-wrap">{userNotes}</p>
+                    </div>
+                  </>
                 )}
+              </CardContent>
+            </Card>
 
-                <div>
-                  <p className="text-muted-foreground text-sm mb-1">Order Date</p>
-                  <p className="font-medium">{formatTimestamp(order.timestamp)}</p>
-                </div>
-
-                <Separator />
-
-                <div>
-                  <p className="font-semibold mb-3">Items Ordered</p>
-                  <div className="space-y-2">
-                    {order.items.map((item, index) => (
-                      <div key={index} className="flex justify-between text-sm py-2 border-b last:border-0">
-                        <span className="font-medium">{item.productName}</span>
-                        <span className="text-muted-foreground">Qty: {Number(item.quantity)}</span>
-                      </div>
-                    ))}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  Order Items
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {order.items.map((item, index) => (
+                    <div key={index} className="flex justify-between">
+                      <span>
+                        {item.productName} × {item.quantity.toString()}
+                      </span>
+                    </div>
+                  ))}
+                  <Separator />
+                  <div className="flex justify-between text-lg font-bold">
+                    <span>Total Amount</span>
+                    <span>₹{Number(order.totalAmount)}</span>
                   </div>
-                </div>
-
-                <Separator />
-
-                <div className="flex justify-between text-lg font-semibold">
-                  <span>Total Amount</span>
-                  <span className="text-primary">₹{Number(order.totalAmount)}</span>
                 </div>
               </CardContent>
             </Card>
 
             <Alert>
-              <Phone className="h-4 w-4" />
               <AlertDescription>
-                For any questions about your order, please call us at{' '}
-                <a href="tel:9494237076" className="font-semibold hover:text-primary transition-colors">
-                  9494237076
-                </a>
+                <p className="font-medium mb-2">Need help?</p>
+                <p className="text-sm">
+                  Contact us at <a href="tel:9494237076" className="font-medium underline">9494237076</a> for any questions about your order.
+                </p>
               </AlertDescription>
             </Alert>
-          </>
+
+            <div className="flex gap-4">
+              <Button onClick={() => navigate({ to: '/' })} variant="outline" className="flex-1">
+                Back to Home
+              </Button>
+              <Button onClick={() => navigate({ to: '/products' })} className="flex-1">
+                Continue Shopping
+              </Button>
+            </div>
+          </div>
         )}
       </div>
     </div>
