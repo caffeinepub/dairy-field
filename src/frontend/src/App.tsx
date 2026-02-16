@@ -68,6 +68,13 @@ function CustomerLayout() {
         </div>
       </header>
 
+      {/* Show admin banner at top of main content for admins */}
+      {showAdminUI && (
+        <div className="container mx-auto px-4 pt-4">
+          <AdminOrderMessageBanner />
+        </div>
+      )}
+
       <main className="flex-1">
         <Outlet />
       </main>

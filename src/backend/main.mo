@@ -343,8 +343,11 @@ actor {
     if (products.size() == 0) {
       return [];
     };
-    let sorted = products.values().toArray().sort();
-    sorted;
+    let productsArray = products.values().toArray();
+    if (productsArray.size() == 0) {
+      return [];
+    };
+    productsArray.sort();
   };
 
   // Create Guest Order

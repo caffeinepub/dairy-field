@@ -1,12 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Fix product catalog loading so the backend `listProducts()` is reliable and deterministic, and the Products page provides clear, actionable recovery and diagnostics when loading fails.
+**Goal:** Ensure the Products catalog loads reliably even if admin access-control initialization fails, and improve error diagnostics/retry UX.
 
 **Planned changes:**
-- Update the backend `listProducts()` implementation to never trap, return products reliably (including when empty), and return results in a deterministic order (e.g., sorted by product name).
-- Improve the Products page error state to display an English, sanitized underlying error message alongside the friendly text.
-- Add a Retry action to the Products page that refetches products, shows retry-in-progress, and renders the grid after a successful retry without a full refresh.
-- Add lightweight frontend diagnostics to distinguish actor initialization failures from `listProducts()` call failures, including clear English messaging and prefixed console logs.
+- Update frontend actor creation/usage flow so failures in `_initializeAccessControlWithSecret` do not block public product queries like `listProducts()`, while still enforcing admin-only access for admin features.
+- Improve Products page error handling to show an English error title/description, include `sanitizeError(error)` output, and provide a Retry action that refetches without a full page reload and shows a clear retrying/loading state.
+- Add clearer console diagnostics distinguishing actor-initialization failures vs. `listProducts()` execution failures.
+- Verify and, if necessary, minimally adjust backend `listProducts()` to remain publicly callable and avoid sporadic traps during sorting/serialization, returning a stable array when products exist.
 
-**User-visible outcome:** The Products page loads products consistently; if loading fails, users see a clear English error with details and can retry successfully without refreshing the page.
+**User-visible outcome:** Users (anonymous or signed in) can open the Products page and see the product list reliably; if loading fails, they see a clear English error with safe details and can retry successfully without reloading the page.

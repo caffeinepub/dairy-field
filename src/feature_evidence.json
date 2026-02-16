@@ -2,8 +2,29 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-improve-the-products-page-error-handling-so-users-can-recover-when-product-loading-fails-and-the-ui-exposes-actionable-error-details-in-english-for-troubleshooting",
-      "featureTitle": "Improve the Products page error handling so users can recover when product loading fails, and the UI exposes actionable error details in English for troubleshooting.",
+      "featureId": "feature-make-product-loading-resilient-to-actor-initialization-failures-so-the-public-product-catalog-can-still-load-even-when-admin-access-control-initialization-fails-e-g-missing-invalid-caffeineadmintoken-specifically-update-the-frontend-actor-creation-flow-to-not-hard-fail-product-queries-when-initializeaccesscontrolwithsecret-throws-traps-instead-allow-creating-using-the-actor-for-public-methods-like-listproducts-and-surface-any-admin-init-failure-only-where-admin-features-are-used",
+      "featureTitle": "Make product loading resilient to actor initialization failures so the public product catalog can still load even when admin access-control initialization fails (e.g., missing/invalid `caffeineAdminToken`). Specifically, update the frontend actor creation flow to not hard-fail product queries when `_initializeAccessControlWithSecret` throws/traps; instead, allow creating/using the actor for public methods like `listProducts()` and surface any admin-init failure only where admin features are used.",
+      "files": [
+        "frontend/src/components/admin/AdminRouteGuard.tsx",
+        "frontend/src/hooks/usePublicActor.ts",
+        "frontend/src/hooks/useQueries.ts"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-improve-the-product-load-error-diagnostics-and-recovery-ux-so-users-can-understand-whether-the-failure-is-a-backend-connection-problem-vs-a-product-fetch-problem-and-can-reliably-retry-ensure-the-error-message-shown-on-the-products-page-remains-in-english-and-includes-a-safe-sanitized-error-string",
+      "featureTitle": "Improve the product-load error diagnostics and recovery UX so users can understand whether the failure is a backend connection problem vs. a product-fetch problem, and can reliably retry. Ensure the error message shown on the Products page remains in English and includes a safe, sanitized error string.",
       "files": [
         "frontend/src/hooks/useQueries.ts",
         "frontend/src/pages/ProductsPage.tsx",
@@ -19,26 +40,6 @@
       ],
       "testIds": [
         "REQ-2"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-lightweight-diagnostics-around-product-loading-to-help-identify-whether-failures-come-from-actor-initialization-or-the-listproducts-call",
-      "featureTitle": "Add lightweight diagnostics around product loading to help identify whether failures come from actor initialization or the `listProducts()` call.",
-      "files": [
-        "frontend/src/hooks/useQueries.ts",
-        "frontend/src/pages/ProductsPage.tsx"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "authorization@4.0.0"
-      ],
-      "testIds": [
-        "REQ-3"
       ],
       "confidence": "high"
     }

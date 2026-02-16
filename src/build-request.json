@@ -1,73 +1,73 @@
 {
   "kind": "build_request",
-  "title": "Fix product catalog failing to load",
+  "title": "Fix product catalog failing to load (robust actor initialization + clearer error recovery)",
   "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Fix the backend public product listing so it reliably returns products without trapping and in a deterministic order.",
-      "target": "backend",
+      "text": "Make product loading resilient to actor initialization failures so the public product catalog can still load even when admin access-control initialization fails (e.g., missing/invalid `caffeineAdminToken`). Specifically, update the frontend actor creation flow to not hard-fail product queries when `_initializeAccessControlWithSecret` throws/traps; instead, allow creating/using the actor for public methods like `listProducts()` and surface any admin-init failure only where admin features are used.",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-1"
         ],
         "quotes": [
           "UNABLE TO LOAD PRODUCTS"
         ]
       },
       "acceptanceCriteria": [
-        "Calling the canister method `listProducts()` returns a non-empty `[Product]` list when default products exist.",
-        "`listProducts()` does not trap for any current in-memory products state (including empty state).",
-        "Products are returned in a consistent, deterministic order (e.g., sorted by product name)."
+        "Opening the Products page successfully loads and renders the product list for an anonymous user.",
+        "Opening the Products page successfully loads and renders the product list for an authenticated (Internet Identity) user even when `caffeineAdminToken` is missing or invalid.",
+        "A failure in `_initializeAccessControlWithSecret` does not prevent React Query `useProducts()` from calling `actor.listProducts()`.",
+        "Admin-only pages/controls still correctly require admin status; lack of admin initialization does not incorrectly grant admin access."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Improve the Products page error handling so users can recover when product loading fails, and the UI exposes actionable error details in English for troubleshooting.",
+      "text": "Improve the product-load error diagnostics and recovery UX so users can understand whether the failure is a backend connection problem vs. a product-fetch problem, and can reliably retry. Ensure the error message shown on the Products page remains in English and includes a safe, sanitized error string.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-1"
         ],
         "quotes": [
           "UNABLE TO LOAD PRODUCTS"
         ]
       },
       "acceptanceCriteria": [
-        "When product loading fails, the Products page displays an English error state that includes the underlying error message (sanitized for display) in addition to the existing friendly text.",
-        "The error state includes a Retry action that triggers a refetch and visibly indicates retry-in-progress.",
-        "If the backend call succeeds after retry, the product grid renders without requiring a full page refresh."
+        "When product loading fails, the Products page shows an English error title and description and displays `sanitizeError(error)` output.",
+        "The Retry button triggers a refetch and properly transitions through a retrying/loading state without requiring a full page reload.",
+        "Console logs for product fetch clearly indicate whether the failure occurred during actor initialization or during `listProducts()` execution."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Add lightweight diagnostics around product loading to help identify whether failures come from actor initialization or the `listProducts()` call.",
-      "target": "frontend",
+      "text": "Ensure the backend public product listing endpoint (`listProducts`) remains publicly accessible and consistently returns a stable array of products without trapping for normal conditions (including when the product map is non-empty). Add minimal backend-side logging/trap prevention only if needed to stop sporadic failures.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-1"
         ],
         "quotes": [
           "UNABLE TO LOAD PRODUCTS"
         ]
       },
       "acceptanceCriteria": [
-        "If actor initialization fails or is unavailable, the Products page shows a clear English message indicating the app could not connect to the backend.",
-        "Console logs include a clear prefix (e.g., `ProductsPage:` / `useProducts:`) and the caught error for both actor initialization issues and `listProducts()` failures.",
-        "No changes are made to any frontend files listed as immutable in SYSTEM_CONTEXT."
+        "`listProducts()` can be called successfully without authentication and returns the current product list.",
+        "`listProducts()` does not trap during sorting/serialization for the existing default products.",
+        "If `products.size() > 0`, `listProducts()` returns a non-empty array matching the stored products."
       ]
     }
   ],
   "constraints": [
     "Backend must remain a single Motoko actor in `backend/main.mo` (no additional backend services).",
-    "Only generate `backend/migration.mo` if a state upgrade is required; otherwise do not introduce migration changes.",
-    "Do not edit any files under `frontend/src/components/ui` or any paths listed in `frontend.immutablePaths` in SYSTEM_CONTEXT.",
-    "Use English for all user-facing text."
+    "Do not edit frontend files under `frontend/src/components/ui`, `frontend/src/hooks/useInternetIdentity.ts`, `frontend/src/hooks/useInternetIdentity.tsx`, `frontend/src/hooks/useActor.ts`, or `frontend/src/main.tsx` (compose around them if needed).",
+    "All user-facing text must be in English."
   ],
   "nonGoals": [
-    "Adding new product-management features beyond fixing loading reliability and diagnostics.",
-    "Introducing external databases or third-party services for product storage or analytics.",
-    "Changing the payment flow or admin order-notification features (unless directly required to resolve product loading)."
+    "Adding new product features (search, filters, categories) beyond fixing loading reliability.",
+    "Changing authentication providers (must remain Internet Identity).",
+    "Introducing external databases or non-IC backend infrastructure."
   ],
   "imageRequirements": {
     "required": [],

@@ -116,7 +116,7 @@ export default function AdminOrderDetailsPage() {
         </div>
       </div>
 
-      {paymentInfo && (paymentInfo.method === 'Google Pay' || paymentInfo.method === 'Online Payment') && (
+      {paymentInfo && paymentInfo.method === 'Google Pay' && (
         <PaymentDetailsSection paymentInfo={paymentInfo} />
       )}
 

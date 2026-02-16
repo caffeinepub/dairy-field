@@ -9,12 +9,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, AlertCircle, ShoppingBag, CreditCard, Copy, Check } from 'lucide-react';
-import { SiGooglepay } from 'react-icons/si';
+import { Loader2, AlertCircle, ShoppingBag, CreditCard } from 'lucide-react';
 import { calculateCartWithLatestPrices } from '@/utils/cartPricing';
 import { PAYMENT_CONFIG } from '@/config/payment';
-import { formatPaymentInfoForNotes, buildGooglePayDeepLink } from '@/utils/payment';
+import { formatPaymentInfoForNotes, buildUpiPaymentUri } from '@/utils/payment';
 import { toast } from 'sonner';
+import GooglePayQrSection from '@/components/GooglePayQrSection';
 import type { CartItem } from '../backend';
 
 export default function CheckoutPage() {
@@ -34,15 +34,10 @@ export default function CheckoutPage() {
   const [address, setAddress] = useState('');
   const [notes, setNotes] = useState('');
   const [transactionRef, setTransactionRef] = useState('');
-  const [copiedUpi, setCopiedUpi] = useState(false);
-  const [copiedPhone, setCopiedPhone] = useState(false);
-  const [copiedAmount, setCopiedAmount] = useState(false);
-  const [paymentAttempted, setPaymentAttempted] = useState(false);
 
-  // Get the default payee - Google Pay UPI
+  // Get the default payee - Google Pay phone
   const payee = PAYMENT_CONFIG.payees.find(p => p.id === PAYMENT_CONFIG.defaultPayeeId) || PAYMENT_CONFIG.payees[0];
-  const payeeName = PAYMENT_CONFIG.payeeName || 'ALIWARISKHAN WARSI';
-  const displayPhone = PAYMENT_CONFIG.phoneNumber || '9494237076';
+  const payeeName = PAYMENT_CONFIG.payeeName || 'Ali Waris Khan';
 
   // Prefill form from user profile only if authenticated
   useEffect(() => {
@@ -114,70 +109,8 @@ export default function CheckoutPage() {
     );
   }
 
-  const handlePayWithGooglePay = () => {
-    if (!payee || !payeeName) {
-      toast.error('Payment configuration is incomplete. Please contact support.');
-      return;
-    }
-
-    const deepLinkResult = buildGooglePayDeepLink(
-      payee,
-      total,
-      payeeName
-    );
-
-    if (deepLinkResult.error) {
-      toast.error(deepLinkResult.error);
-      setPaymentAttempted(true);
-      return;
-    }
-
-    if (deepLinkResult.url) {
-      // Try to open the Google Pay app
-      try {
-        window.location.href = deepLinkResult.url;
-        setPaymentAttempted(true);
-        toast.success('Opening Google Pay...');
-      } catch (error) {
-        toast.error('Unable to open Google Pay. Please use manual payment below.');
-        setPaymentAttempted(true);
-      }
-    }
-  };
-
-  const handleCopyUpi = async () => {
-    if (!payee) return;
-    try {
-      await navigator.clipboard.writeText(payee.value);
-      setCopiedUpi(true);
-      toast.success('UPI ID copied!');
-      setTimeout(() => setCopiedUpi(false), 2000);
-    } catch (error) {
-      toast.error('Failed to copy. Please try again.');
-    }
-  };
-
-  const handleCopyPhone = async () => {
-    try {
-      await navigator.clipboard.writeText(displayPhone);
-      setCopiedPhone(true);
-      toast.success('Phone number copied!');
-      setTimeout(() => setCopiedPhone(false), 2000);
-    } catch (error) {
-      toast.error('Failed to copy. Please try again.');
-    }
-  };
-
-  const handleCopyAmount = async () => {
-    try {
-      await navigator.clipboard.writeText(total.toString());
-      setCopiedAmount(true);
-      toast.success('Amount copied!');
-      setTimeout(() => setCopiedAmount(false), 2000);
-    } catch (error) {
-      toast.error('Failed to copy. Please try again.');
-    }
-  };
+  // Build UPI URI for QR code
+  const upiUriResult = payee && payeeName ? buildUpiPaymentUri(payee, total, payeeName) : { error: 'Payment not configured' };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -188,8 +121,8 @@ export default function CheckoutPage() {
         quantity: BigInt(item.quantity),
       }));
 
-      // Format payment info and combine with user notes
-      const paymentInfo = formatPaymentInfoForNotes('online', payee?.id, transactionRef);
+      // Format payment info with QR flow indicator and combine with user notes
+      const paymentInfo = formatPaymentInfoForNotes('online', payee?.id, transactionRef, 'qr');
       // User notes come first, then payment info
       const orderNotes = notes.trim() 
         ? `${notes.trim()}\n\n${paymentInfo}` 
@@ -302,154 +235,80 @@ export default function CheckoutPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <CreditCard className="h-5 w-5" />
-                  Payment Information
+                  Transaction Reference (Optional)
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <Alert className="border-primary/50 bg-primary/5">
-                  <SiGooglepay className="h-5 w-5 text-primary" />
-                  <AlertDescription>
-                    <p className="font-semibold mb-1">Google Pay Payment</p>
-                    <p className="text-sm">Pay to: <span className="font-medium">{payeeName}</span></p>
-                    {payee && payee.type === 'upi' && (
-                      <p className="text-sm">UPI ID: <span className="font-medium">{payee.value}</span></p>
-                    )}
-                    <p className="text-sm">Phone: <span className="font-medium">{displayPhone}</span></p>
-                  </AlertDescription>
-                </Alert>
-
-                <div className="space-y-3">
-                  <Button
-                    type="button"
-                    onClick={handlePayWithGooglePay}
-                    className="w-full"
-                    size="lg"
-                  >
-                    <SiGooglepay className="h-5 w-5 mr-2" />
-                    Pay with Google Pay
-                  </Button>
-
-                  {paymentAttempted && (
-                    <div className="space-y-3 pt-2 border-t">
-                      <p className="text-sm text-muted-foreground">
-                        Or copy payment details manually:
-                      </p>
-
-                      {payee && payee.type === 'upi' && (
-                        <div className="flex gap-2">
-                          <Input
-                            value={payee.value}
-                            readOnly
-                            className="flex-1"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            onClick={handleCopyUpi}
-                          >
-                            {copiedUpi ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                          </Button>
-                        </div>
-                      )}
-
-                      <div className="flex gap-2">
-                        <Input
-                          value={displayPhone}
-                          readOnly
-                          className="flex-1"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={handleCopyPhone}
-                        >
-                          {copiedPhone ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                        </Button>
-                      </div>
-
-                      <div className="flex gap-2">
-                        <Input
-                          value={`₹${total}`}
-                          readOnly
-                          className="flex-1"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={handleCopyAmount}
-                        >
-                          {copiedAmount ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="transactionRef">Transaction Reference (Optional)</Label>
-                  <Input
-                    id="transactionRef"
-                    value={transactionRef}
-                    onChange={(e) => setTransactionRef(e.target.value)}
-                    placeholder="Enter UPI transaction ID after payment"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Add your transaction ID for faster order confirmation
-                  </p>
-                </div>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-3">
+                  After completing payment, enter your UPI transaction ID or reference number here:
+                </p>
+                <Input
+                  value={transactionRef}
+                  onChange={(e) => setTransactionRef(e.target.value)}
+                  placeholder="e.g., 123456789012"
+                />
               </CardContent>
             </Card>
           </div>
 
-          <div>
-            <Card className="sticky top-4">
+          <div className="space-y-6">
+            <Card>
               <CardHeader>
                 <CardTitle>Order Summary</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  {itemsWithPrices.map((item) => (
-                    <div key={item.productName} className="flex justify-between text-sm">
+              <CardContent>
+                <div className="space-y-3">
+                  {itemsWithPrices.map((item, index) => (
+                    <div key={index} className="flex justify-between text-sm">
                       <span>
                         {item.productName} × {item.quantity}
                       </span>
                       <span className="font-medium">₹{item.lineTotal}</span>
                     </div>
                   ))}
-                </div>
-
-                <div className="border-t pt-4">
-                  <div className="flex justify-between text-lg font-bold">
+                  <div className="border-t pt-3 flex justify-between text-lg font-bold">
                     <span>Total</span>
                     <span>₹{total}</span>
                   </div>
                 </div>
-
-                <Button
-                  type="submit"
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                  className="w-full"
-                  size="lg"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Placing Order...
-                    </>
-                  ) : (
-                    'Place Order'
-                  )}
-                </Button>
-
-                <p className="text-xs text-muted-foreground text-center">
-                  By placing this order, you agree to our terms and conditions
-                </p>
               </CardContent>
             </Card>
+
+            {upiUriResult.uri && payee ? (
+              <GooglePayQrSection
+                upiUri={upiUriResult.uri}
+                payeeValue={payee.value}
+                payeeName={payeeName}
+                amount={total}
+              />
+            ) : (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {upiUriResult.error || 'Payment configuration error. Please contact support.'}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <Button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="w-full"
+              size="lg"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Placing Order...
+                </>
+              ) : (
+                'Place Order'
+              )}
+            </Button>
+
+            <p className="text-xs text-center text-muted-foreground">
+              By placing this order, you confirm that you have completed or will complete the payment via the QR code above.
+            </p>
           </div>
         </div>
       </div>

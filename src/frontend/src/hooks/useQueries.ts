@@ -1,27 +1,31 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
+import { usePublicActor } from './usePublicActor';
 import type { Product, Order, OrderResponse, CartItem, UserProfile } from '../backend';
 
+/**
+ * Public product listing hook - uses public actor to avoid admin initialization failures
+ */
 export function useProducts() {
-  const { actor, isFetching: actorFetching } = useActor();
+  const { actor, isFetching: actorFetching, isError: actorError, error: actorErrorObj } = usePublicActor();
 
   const query = useQuery<Product[]>({
     queryKey: ['products'],
     queryFn: async () => {
-      console.log('useProducts: Starting product fetch');
+      console.log('[useProducts] Starting product fetch');
       
       if (!actor) {
-        console.error('useProducts: Actor not available');
+        console.error('[useProducts] Actor not available');
         throw new Error('Backend connection not available');
       }
 
       try {
-        console.log('useProducts: Calling listProducts()');
+        console.log('[useProducts] Calling listProducts()');
         const products = await actor.listProducts();
-        console.log(`useProducts: Successfully loaded ${products.length} products`);
+        console.log(`[useProducts] Successfully loaded ${products.length} products`);
         return products;
       } catch (error) {
-        console.error('useProducts: listProducts() failed', error);
+        console.error('[useProducts] listProducts() execution failed:', error);
         throw error;
       }
     },
@@ -36,13 +40,26 @@ export function useProducts() {
   // Show loading while actor is being created OR while query is loading
   const isLoading = actorFetching || query.isLoading;
   
-  // Determine if this is an actor initialization error vs a query error
-  const isActorError = !actor && !actorFetching && query.error;
+  // Determine if this is an actor initialization error vs a listProducts() error
+  const isActorError = actorError || (!actor && !actorFetching && !!query.error);
   
+  // Provide detailed error context
+  const errorContext = query.error || actorErrorObj;
+  
+  console.log('[useProducts] State:', {
+    isLoading,
+    isActorError,
+    hasActor: !!actor,
+    actorFetching,
+    queryError: !!query.error,
+    actorErrorObj: !!actorErrorObj,
+  });
+
   return {
     ...query,
     isLoading,
     isActorError,
+    error: errorContext,
   };
 }
 
@@ -150,6 +167,7 @@ export function useGetOrder(orderId: bigint) {
 
 export function useGetAllOrders() {
   const { actor, isFetching: actorFetching } = useActor();
+  const { data: isAdmin } = useIsAdmin();
 
   return useQuery<Order[]>({
     queryKey: ['orders'],
@@ -157,7 +175,7 @@ export function useGetAllOrders() {
       if (!actor) throw new Error('Actor not initialized');
       return actor.getAllOrders();
     },
-    enabled: !!actor && !actorFetching,
+    enabled: !!actor && !actorFetching && isAdmin === true,
     refetchInterval: 10000, // Poll every 10 seconds for more responsive admin updates
     refetchOnWindowFocus: true,
     refetchOnMount: 'always',
@@ -206,9 +224,15 @@ export function useIsAdmin() {
     queryKey: ['isAdmin'],
     queryFn: async () => {
       if (!actor) return false;
-      return actor.isCallerAdmin();
+      try {
+        return await actor.isCallerAdmin();
+      } catch (error) {
+        console.error('[useIsAdmin] Failed to check admin status:', error);
+        return false;
+      }
     },
     enabled: !!actor && !actorFetching,
+    retry: false,
   });
 }
 
@@ -219,9 +243,15 @@ export function useIsCallerAdmin() {
     queryKey: ['isAdmin'],
     queryFn: async () => {
       if (!actor) return false;
-      return actor.isCallerAdmin();
+      try {
+        return await actor.isCallerAdmin();
+      } catch (error) {
+        console.error('[useIsCallerAdmin] Failed to check admin status:', error);
+        return false;
+      }
     },
     enabled: !!actor && !actorFetching,
+    retry: false,
   });
 }
 

@@ -2,28 +2,20 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Info, ShoppingBag, Check } from 'lucide-react';
 import { useAdminOrdersPolling } from '@/hooks/useAdminOrdersPolling';
-import { setLastSeenOrders } from '@/utils/adminLastSeenOrders';
 import { toast } from 'sonner';
+import { useNavigate } from '@tanstack/react-router';
 
 export default function AdminOrderMessageBanner() {
-  const { orders, newOrderCount, isLoading } = useAdminOrdersPolling();
+  const { newOrderCount, isLoading, markAsSeen } = useAdminOrdersPolling();
+  const navigate = useNavigate();
 
   const handleViewOrders = () => {
-    window.location.href = '/admin/orders';
+    navigate({ to: '/admin/orders' });
   };
 
   const handleMarkAsSeen = () => {
-    if (orders.length > 0) {
-      const latestOrder = orders.reduce((latest, order) => 
-        order.timestamp > latest.timestamp ? order : latest
-      );
-      setLastSeenOrders(Number(latestOrder.timestamp) / 1000000, latestOrder.id.toString());
-      toast.success('All orders marked as seen');
-      // Force a small delay to allow state to update
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
-    }
+    markAsSeen();
+    toast.success('All orders marked as seen');
   };
 
   // Don't show banner while loading or if no new orders

@@ -9,6 +9,7 @@ export interface PaymentInfo {
   payeeLabel?: string;
   payeeValue?: string;
   transactionRef?: string;
+  paymentFlow?: string; // 'qr' or 'deeplink'
 }
 
 /**
@@ -53,26 +54,21 @@ export function validatePayee(payee: PayeeOption): PayeeValidationResult {
 }
 
 /**
- * Builds a Google Pay UPI deep link for payment
+ * Builds a UPI payment URI for QR code generation
  * @param payee - The payee option (phone or UPI)
  * @param amount - Payment amount in rupees
  * @param payeeName - Name of the payee
- * @returns Google Pay intent URL or error result
+ * @returns UPI URI string or error result
  */
-export function buildGooglePayDeepLink(
+export function buildUpiPaymentUri(
   payee: PayeeOption,
   amount: number,
   payeeName: string
-): { url?: string; error?: string } {
+): { uri?: string; error?: string } {
   // Validate payee
   const validation = validatePayee(payee);
   if (!validation.valid) {
     return { error: validation.error || 'Invalid payee configuration. Please contact support.' };
-  }
-
-  // Check if we're in a browser environment that supports deep links
-  if (typeof window === 'undefined') {
-    return { error: 'Payment links are not available in this environment.' };
   }
 
   let upiAddress: string;
@@ -81,7 +77,7 @@ export function buildGooglePayDeepLink(
     // Use UPI ID directly
     upiAddress = payee.value;
   } else if (payee.type === 'phone') {
-    // Phone number - append @paytm for Google Pay
+    // Phone number - append @paytm for Google Pay compatibility
     const phoneRegex = /^\d{10,15}$/;
     if (!phoneRegex.test(payee.value)) {
       return { error: 'Invalid phone number format. Please contact support.' };
@@ -91,8 +87,8 @@ export function buildGooglePayDeepLink(
     return { error: 'Unsupported payee type. Please contact support.' };
   }
 
-  // Build Google Pay UPI deep link
-  // Format: gpay://upi/pay?pa=<upi_address>&pn=<name>&am=<amount>&cu=INR
+  // Build UPI payment URI
+  // Format: upi://pay?pa=<upi_address>&pn=<name>&am=<amount>&cu=INR&tn=<note>
   const params = new URLSearchParams({
     pa: upiAddress,
     pn: payeeName,
@@ -101,7 +97,7 @@ export function buildGooglePayDeepLink(
     tn: 'DAIRY FIELD Order',
   });
 
-  return { url: `gpay://upi/pay?${params.toString()}` };
+  return { uri: `upi://pay?${params.toString()}` };
 }
 
 /**
@@ -109,19 +105,22 @@ export function buildGooglePayDeepLink(
  * @param paymentMethod - Selected payment method (only 'online' is supported now)
  * @param payeeId - Selected payee ID (for online payment)
  * @param transactionRef - Optional transaction reference/ID
+ * @param paymentFlow - Payment flow type ('qr' or 'deeplink')
  * @returns Formatted payment note text with structured data
  */
 export function formatPaymentInfoForNotes(
   paymentMethod: 'online',
   payeeId?: string,
-  transactionRef?: string
+  transactionRef?: string,
+  paymentFlow: 'qr' | 'deeplink' = 'qr'
 ): string {
   // Default to the configured default payee if none provided
   const effectivePayeeId = payeeId || PAYMENT_CONFIG.defaultPayeeId || PAYMENT_CONFIG.payees[0]?.id;
   const selectedPayee = PAYMENT_CONFIG.payees.find(p => p.id === effectivePayeeId);
 
   let structuredInfo = `[PAYMENT_INFO]
-Method: Google Pay`;
+Method: Google Pay
+PaymentFlow: ${paymentFlow}`;
 
   if (selectedPayee) {
     structuredInfo += `
@@ -165,6 +164,9 @@ export function parsePaymentInfo(notes?: string): PaymentInfo | null {
     switch (key.trim()) {
       case 'Method':
         info.method = value;
+        break;
+      case 'PaymentFlow':
+        info.paymentFlow = value;
         break;
       case 'PayeeType':
         info.payeeType = value;

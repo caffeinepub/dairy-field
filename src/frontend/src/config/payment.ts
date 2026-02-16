@@ -16,19 +16,19 @@ export interface PaymentConfig {
   fallbackURL?: string; // Optional fallback URL if UPI not available
 }
 
-// Configure your payment details here - Google Pay with UPI ID
+// Configure your payment details here - Google Pay with phone number
 export const PAYMENT_CONFIG: PaymentConfig = {
   payees: [
     {
-      id: 'gpay-upi',
-      type: 'upi',
+      id: 'gpay-phone',
+      type: 'phone',
       label: 'Google Pay',
-      value: 'aliwarsi@sbi',
+      value: '9494237076',
     },
   ],
-  defaultPayeeId: 'gpay-upi',
-  payeeName: 'ALIWARISKHAN WARSI',
-  phoneNumber: '9494237076', // Display phone for reference
+  defaultPayeeId: 'gpay-phone',
+  payeeName: 'Ali Waris Khan',
+  phoneNumber: '9494237076',
 };
 
 export function isPaymentConfigured(): boolean {

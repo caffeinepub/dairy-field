@@ -8,9 +8,14 @@ interface AdminRouteGuardProps {
   accessDeniedMessage?: string;
 }
 
+/**
+ * Admin route guard that ensures only confirmed admins can access protected routes.
+ * Fails closed: if admin status cannot be confirmed, access is denied.
+ */
 export default function AdminRouteGuard({ children, accessDeniedMessage }: AdminRouteGuardProps) {
-  const { data: isAdmin, isLoading } = useIsAdmin();
+  const { data: isAdmin, isLoading, isError } = useIsAdmin();
 
+  // Show loading state while checking admin status
   if (isLoading) {
     return (
       <div className="container py-12 flex justify-center">
@@ -19,7 +24,9 @@ export default function AdminRouteGuard({ children, accessDeniedMessage }: Admin
     );
   }
 
-  if (!isAdmin) {
+  // Fail closed: deny access if admin check failed or user is not admin
+  // This ensures that admin initialization failures don't accidentally grant access
+  if (isError || !isAdmin) {
     return <AdminAccessDenied message={accessDeniedMessage} />;
   }
 

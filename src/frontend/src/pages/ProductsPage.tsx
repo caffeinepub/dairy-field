@@ -21,13 +21,13 @@ export default function ProductsPage() {
   };
 
   const handleRetry = async () => {
-    console.log('ProductsPage: User initiated retry');
+    console.log('[ProductsPage] User initiated retry');
     setIsRetrying(true);
     try {
       await refetch();
-      console.log('ProductsPage: Retry completed');
+      console.log('[ProductsPage] Retry completed successfully');
     } catch (err) {
-      console.error('ProductsPage: Retry failed', err);
+      console.error('[ProductsPage] Retry failed:', err);
     } finally {
       setIsRetrying(false);
     }
@@ -59,9 +59,18 @@ export default function ProductsPage() {
 
   if (error) {
     const errorMessage = sanitizeError(error);
-    const isConnectionError = isActorError || errorMessage.toLowerCase().includes('backend connection');
+    const isConnectionError = isActorError || 
+      errorMessage.toLowerCase().includes('backend connection') ||
+      errorMessage.toLowerCase().includes('actor not') ||
+      errorMessage.toLowerCase().includes('connection') ||
+      errorMessage.toLowerCase().includes('network');
     
-    console.error('ProductsPage: Error state', { error, isActorError, isConnectionError });
+    console.error('[ProductsPage] Error state:', { 
+      error, 
+      isActorError, 
+      isConnectionError,
+      sanitizedMessage: errorMessage,
+    });
 
     return (
       <div className="container py-12">
@@ -81,7 +90,7 @@ export default function ProductsPage() {
               </p>
             ) : (
               <p>
-                We couldn't load the product catalog. This might be a temporary issue.
+                We couldn't load the product catalog. This might be a temporary issue with the product listing service.
               </p>
             )}
             <div className="mt-2 p-3 bg-destructive/10 rounded-md">
@@ -191,7 +200,7 @@ export default function ProductsPage() {
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <CardTitle className="text-xl">{product.name}</CardTitle>
-                    <Badge variant="outline">Ice Cream</Badge>
+                    <Badge variant="outline">{product.category}</Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="flex-1">

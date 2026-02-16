@@ -1,57 +1,63 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Improve Products page resilience, error recovery, and diagnostics",
+  "title": "Resilient product catalog loading with decoupled admin initialization and improved error recovery UX",
   "requirements": [
     {
-      "id": "REQ-2",
-      "summary": "Enhance Products page error UI to show actionable English details, support retry with in-progress state, and recover without refresh.",
+      "id": "REQ-1",
+      "summary": "Decouple public product fetching from admin access-control initialization so `listProducts()` can succeed even if admin initialization fails.",
       "acceptanceCriteria": [
-        "When product loading fails, the Products page displays an English error state that includes the underlying error message (sanitized for display) in addition to the existing friendly text.",
-        "The error state includes a Retry action that triggers a refetch and visibly indicates retry-in-progress.",
-        "If the backend call succeeds after retry, the product grid renders without requiring a full page refresh."
+        "Opening the Products page successfully loads and renders the product list for an anonymous user.",
+        "Opening the Products page successfully loads and renders the product list for an authenticated (Internet Identity) user even when `caffeineAdminToken` is missing or invalid.",
+        "A failure in `_initializeAccessControlWithSecret` does not prevent React Query `useProducts()` from calling `actor.listProducts()`.",
+        "Admin-only pages/controls still correctly require admin status; lack of admin initialization does not incorrectly grant admin access."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/ProductsPage.tsx",
-          "operation": "modify",
-          "description": "Update the error state UI to include a sanitized underlying error message in English (in addition to the friendly text), and ensure the Retry action clearly indicates retry-in-progress and triggers a refetch that can recover the grid without full refresh. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/utils/errorDisplay.ts",
+          "path": "frontend/src/hooks/usePublicActor.ts",
           "operation": "create",
-          "description": "Add a small utility to sanitize/normalize unknown errors into safe English display text (e.g., handle Error/strings/objects; strip noisy prefixes). Use this from ProductsPage and product-loading hooks. Verify the component's usage instructions before implementing."
+          "description": "Create a dedicated hook that builds an actor suitable for public read-only calls (e.g., `listProducts()`), using Internet Identity when present but never hard-failing due to admin access-control initialization. It should expose clear state for (a) actor creation failures vs (b) admin-init failures that are intentionally ignored for public calls. Verify the component's usage instructions before implementing."
         },
         {
           "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Adjust the products React Query hook to better support manual retry/refetch flows and expose enough state for the page to render retry-in-progress and recover cleanly after a successful refetch. Leverage the existing core-infrastructure actor wiring via useActor/createActorWithConfig. Verify the component's usage instructions before implementing."
+          "description": "Update `useProducts()` to use the new public-actor hook instead of `useActor()` so product fetching is resilient to `_initializeAccessControlWithSecret` throwing/trapping. Ensure `useProducts()` can still run for both anonymous and authenticated users, and that admin-only hooks/guards continue to rely on existing admin-gated flows. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/admin/AdminRouteGuard.tsx",
+          "operation": "modify",
+          "description": "Confirm/adjust the admin guard behavior so that if admin initialization fails and admin status cannot be confirmed, admin routes remain denied (fail-closed) rather than accidentally allowing access. Keep the guard compatible with the existing `useIsAdmin()` behavior. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Ensure admin navigation visibility remains strictly dependent on confirmed admin status (no admin-init failure should show admin links). If needed, refine the logic that decides when to display admin UI so it never becomes truthy due to missing role data. Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
-      "id": "REQ-3",
-      "summary": "Add lightweight diagnostics to distinguish actor initialization failures from listProducts() call failures, with clear UI messaging and prefixed console logs.",
+      "id": "REQ-2",
+      "summary": "Improve Products page error diagnostics and retry UX with sanitized English messages and clear distinction between connection/actor failures vs `listProducts()` failures.",
       "acceptanceCriteria": [
-        "If actor initialization fails or is unavailable, the Products page shows a clear English message indicating the app could not connect to the backend.",
-        "Console logs include a clear prefix (e.g., `ProductsPage:` / `useProducts:`) and the caught error for both actor initialization issues and `listProducts()` failures.",
-        "No changes are made to any frontend files listed as immutable in SYSTEM_CONTEXT."
+        "When product loading fails, the Products page shows an English error title and description and displays `sanitizeError(error)` output.",
+        "The Retry button triggers a refetch and properly transitions through a retrying/loading state without requiring a full page reload.",
+        "Console logs for product fetch clearly indicate whether the failure occurred during actor initialization or during `listProducts()` execution."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useActor.ts",
+          "path": "frontend/src/utils/errorDisplay.ts",
           "operation": "modify",
-          "description": "Expose actor initialization failure state (e.g., error/isError) to consumers and add prefixed console logging for actor creation/initialization failures (e.g., `useActor:`). Keep behavior compatible with existing core-infrastructure connection setup. Verify the component's usage instructions before implementing."
+          "description": "Harden `sanitizeError(error)` to ensure output is safe, sanitized, and English-only for display (including redaction of obvious secret/token-like substrings and removal of noisy prefixes), while keeping the returned string stable for UI rendering. Verify the component's usage instructions before implementing."
         },
         {
           "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Add prefixed console logging around the product-loading query function to distinguish between (a) actor unavailable/initialization issues and (b) listProducts() failures (e.g., `useProducts:`). Ensure the thrown errors remain suitable for sanitized display in the Products page. Verify the component's usage instructions before implementing."
+          "description": "Enhance `useProducts()` logging and error classification so console output clearly separates (1) actor creation/connection issues from (2) `listProducts()` execution failures. Ensure the hook exposes enough information for the Products page to render the correct error title/description. Verify the component's usage instructions before implementing."
         },
         {
           "path": "frontend/src/pages/ProductsPage.tsx",
           "operation": "modify",
-          "description": "Use the actor initialization error state (from useActor/useProducts) to render a distinct English message for backend connection failure vs product-listing failure. Add prefixed console logs for page-level catches/branches (e.g., `ProductsPage:`). Ensure no edits are made to any immutable frontend paths per SYSTEM_CONTEXT. Verify the component's usage instructions before implementing."
+          "description": "Refine the error UI and recovery flow: keep all text in English, always show the sanitized error string from `sanitizeError(error)`, ensure Retry triggers React Query refetch and shows a retrying/loading transition, and display distinct messaging for backend connection/actor failures vs product-fetch failures. Use existing shadcn/ui components (e.g., Alert, Button, Skeleton) for consistent UX; do not modify `frontend/src/components/ui/*`. Verify the component's usage instructions before implementing."
         }
       ]
     }
